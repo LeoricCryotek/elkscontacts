@@ -1,0 +1,110 @@
+<!-- elkscontacts/static/description/index.html -->
+<section class="oe_container oe_dark">
+  <div class="oe_row oe_spaced">
+    <h1 class="oe_slogan">Elks Contacts</h1>
+    <h2 class="oe_slogan">Smarter member records for Odoo 18</h2>
+    <div class="oe_span12">
+      <p>
+        <strong>Elks Contacts</strong> extends <em>Contacts</em> to store and
+        maintain Elks Lodge member data on <code>res.partner</code>. It prevents
+        duplicate records on import, keeps members as individuals (not companies),
+        and maps your Elks data into native Odoo fields for cleaner day-to-day use.
+      </p>
+    </div>
+    <div class="oe_span12 oe_center oe_mt32">
+      <img class="oe_picture oe_screenshot" src="banner.png" alt="Elks Contacts banner"/>
+      <!-- Replace banner.png with your own image (1024x512 recommended) -->
+    </div>
+  </div>
+</section>
+
+<section class="oe_container">
+  <div class="oe_row oe_spaced">
+    <h3 class="oe_title">Key features</h3>
+    <ul>
+      <li><strong>De-dup on import by Member #</strong>:
+        If <code>x_detail_member_num</code> matches an existing contact (even archived),
+        the importer updates that record instead of creating a duplicate.</li>
+      <li><strong>Always a Person</strong>:
+        Imported/updated members are forced to <code>company_type = person</code> and <code>is_company = False</code>.</li>
+      <li><strong>Field mapping helpers</strong>:
+        Buttons/server action copy Elks fields (name parts, addresses, phones, email) into
+        native Odoo fields (<code>name, title, street, city, zip, state_id, country_id, phone, mobile, fax, email</code>).</li>
+      <li><strong>Officer roles</strong>:
+        Officer position with computed type (elected/appointed) and “is officer” flag,
+        plus a constraint to allow only one holder per role.</li>
+      <li><strong>Search filters</strong>:
+        Extra filters in Contacts (Elks Officers, Dues Paid/Overdue, Volunteers).</li>
+      <li><strong>Safety net</strong>:
+        SQL constraint ensures the Elks Member Number is unique across contacts.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="oe_container oe_dark">
+  <div class="oe_row oe_spaced">
+    <h3 class="oe_title">How it works</h3>
+    <ol>
+      <li><strong>Import</strong> your CSV/XLSX into Contacts. When a row contains
+        <code>x_detail_member_num</code> already in the database, the module <em>merges/updates</em>
+        that contact instead of inserting a new one.</li>
+      <li>The module composes a display name from
+        <code>First/Middle/Last</code> when <code>name</code> is blank, and maps the title from salutation.</li>
+      <li>Addresses and phones are normalized and copied into standard fields; state/country are resolved by code or name.</li>
+      <li>Members are kept as <em>individuals</em> on both create and write.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="oe_container">
+  <div class="oe_row oe_spaced">
+    <h3 class="oe_title">Menus & Actions</h3>
+    <ul>
+      <li><strong>Contacts → Actions → Apply Elks Mapping</strong>:
+        runs a server action that applies the mapping helpers on the selected records.
+        If nothing is selected, it processes all contacts that have Elks data populated.</li>
+    </ul>
+    <p class="oe_mt16">
+      You can run it anytime after an import to refresh native fields or to re-normalize edits.
+    </p>
+  </div>
+</section>
+
+<section class="oe_container oe_dark">
+  <div class="oe_row oe_spaced">
+    <h3 class="oe_title">Fields added (high level)</h3>
+    <p>
+      Numerous <code>x_detail_* </code> fields for member, name, address, phones, dues and household;
+      local helper flags (<code>x_local_*</code>); officer role and computed flags.
+      Native fields are updated via helper methods—no separate model is introduced.
+    </p>
+  </div>
+</section>
+
+<section class="oe_container">
+  <div class="oe_row oe_spaced">
+    <h3 class="oe_title">Setup</h3>
+    <ol>
+      <li>Install this module from Apps.</li>
+      <li>Import your member file via <strong>Contacts &rarr; Favorites &rarr; Import</strong>.
+        Ensure the column headers map to the provided <code>x_detail_*</code> fields.</li>
+      <li>After import, run <strong>Contacts → Actions → Apply Elks Mapping</strong>.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="oe_container oe_dark">
+  <div class="oe_row oe_spaced">
+    <h3 class="oe_title">Compatibility</h3>
+    <p>Odoo 18.0 (Community &amp; Enterprise). License: LGPL-3.</p>
+  </div>
+</section>
+
+<section class="oe_container">
+  <div class="oe_row oe_spaced">
+    <h3 class="oe_title">Support</h3>
+    <p>
+      Issues or questions? Open a ticket in your repo or contact the maintainer.
+    </p>
+  </div>
+</section>
