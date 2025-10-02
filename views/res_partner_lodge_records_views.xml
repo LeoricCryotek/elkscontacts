@@ -1,0 +1,29 @@
+<odoo>
+  <data>
+    <record id="view_partner_form_lodge_records" model="ir.ui.view">
+      <field name="name">res.partner.form.lodge.records</field>
+      <field name="model">res.partner</field>
+      <field name="inherit_id" ref="base.view_partner_form"/>
+      <field name="priority" eval="30"/>
+      <field name="arch" type="xml">
+        <xpath expr="//sheet/notebook" position="inside">
+          <page string="Lodge Records" name="lodge_records">
+            <group>
+              <group string="Access">
+                <field name="x_local_door_code"/>
+                <field name="x_local_has_key"/>
+              </group>
+              <group string="Volunteer &amp; Roles">
+                <field name="x_local_volunteer_active"/>
+                <!-- show role flags only when volunteer is active -->
+                <field name="x_local_bartender" invisible="not x_local_volunteer_active"/>
+                <field name="x_local_kitchen" invisible="not x_local_volunteer_active"/>
+                <field name="x_local_sanitation" invisible="not x_local_volunteer_active"/>
+              </group>
+            </group>
+          </page>
+        </xpath>
+      </field>
+    </record>
+  </data>
+</odoo>

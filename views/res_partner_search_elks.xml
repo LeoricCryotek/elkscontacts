@@ -1,0 +1,36 @@
+<odoo>
+    <data>
+        <record id="view_res_partner_search_elks" model="ir.ui.view">
+            <field name="name">res.partner.search.elks</field>
+            <field name="model">res.partner</field>
+            <!-- If your DB uses a different XML ID for the search view, swap this ref -->
+            <field name="inherit_id" ref="base.view_res_partner_filter"/>
+            <field name="arch" type="xml">
+                <xpath expr="//search" position="inside">
+                    <separator string="Elks"/>
+
+                    <!-- Has any officer position set -->
+                    <filter name="elks_officer_set"
+                            string="Elks Officers"
+                            domain="[('x_elks_officer_position','!=',False)]"
+                            help="Contacts with an Elks officer position set."/>
+
+                    <!-- Dues Paid -->
+                    <filter name="elks_dues_paid"
+                            string="Dues Paid"
+                            domain="[('x_is_dues_paid','=',True)]"/>
+
+                    <!-- Dues Overdue -->
+                    <filter name="elks_dues_overdue"
+                            string="Dues Overdue"
+                            domain="[('x_is_dues_paid','=',False)]"/>
+
+                    <filter name="filter_volunteers"
+                            string="Volunteers"
+                            help="Contacts marked as active volunteers"
+                            domain="[('x_local_volunteer_active','=',True)]"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

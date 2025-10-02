@@ -1,0 +1,48 @@
+<odoo>
+  <data>
+    <record id="view_res_partner_kanban_elks" model="ir.ui.view">
+      <field name="name">res.partner.kanban.elks</field>
+      <field name="model">res.partner</field>
+      <!-- Use the XML ID you saw in the UI -->
+      <field name="inherit_id" ref="base.res_partner_kanban_view"/>
+      <field name="priority" eval="20"/>
+      <field name="arch" type="xml">
+
+        <!-- Make these fields available inside the template -->
+        <xpath expr="//kanban" position="inside">
+          <field name="x_is_dues_paid"/>
+          <field name="x_detail_member_num"/>
+          <field name="x_elks_officer_position"/>
+        </xpath>
+
+        <!-- Dues status + member # + officer position (above footer) -->
+        <xpath expr="//kanban/templates/t[@t-name='card']/main/footer" position="before">
+          <div class="mt-1 d-flex align-items-center flex-wrap gap-2">
+            <!-- Dues -->
+            <t t-if="record.x_is_dues_paid.raw_value">
+              <span class="badge text-bg-success">Dues: Current</span>
+            </t>
+            <t t-if="!record.x_is_dues_paid.raw_value">
+              <span class="badge text-bg-danger">Dues: Overdue</span>
+            </t>
+
+            <!-- Member number -->
+            <t t-if="record.x_detail_member_num.raw_value">
+              <span class="text-muted small">
+                Member #: <field name="x_detail_member_num"/>
+              </span>
+            </t>
+
+            <!-- Officer position -->
+            <t t-if="record.x_elks_officer_position.raw_value">
+              <span class="badge text-bg-info">
+                <field name="x_elks_officer_position"/>
+              </span>
+            </t>
+          </div>
+        </xpath>
+
+      </field>
+    </record>
+  </data>
+</odoo>

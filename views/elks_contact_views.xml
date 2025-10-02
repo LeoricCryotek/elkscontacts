@@ -1,0 +1,106 @@
+<odoo>
+    <!-- CLMS tab on res.partner -->
+    <record id="view_partner_form_elks" model="ir.ui.view">
+        <field name="name">res.partner.form.elks</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet/notebook" position="inside">
+                <page string="CLMS">
+                    <group>
+                        <group string="Membership">
+                            <field name="x_detail_id" string="Record ID"/>
+                            <field name="x_detail_member_num" string="Member Number"/>
+                            <field name="x_detail_lodge_id" string="Lodge ID"/>
+                            <field name="x_detail_lodge_num" string="Lodge Number"/>
+                            <field name="x_lodge_report_lodge_name" string="Lodge Name"/>
+                            <field name="x_detail_elk_title" string="Elks Title"/>
+                            <field name="x_detail_dues_paid_to_date" string="Dues Paid To Date"/>
+                            <field name="x_detail_delinquent_months" string="Delinquent Months"/>
+                            <field name="x_enotices_ok" string="E-Notices OK"/>
+                        </group>
+                        <group string="Name">
+                            <field name="x_detail_name_prefix" string="Name Prefix"/>
+                            <field name="x_detail_name_salutation" string="Salutation"/>
+                            <field name="x_detail_first_name" string="First Name"/>
+                            <field name="x_detail_middle_name" string="Middle Name"/>
+                            <field name="x_detail_last_name" string="Last Name"/>
+                            <field name="x_detail_name_suffix" string="Name Suffix"/>
+                            <field name="x_maiden_name" string="Maiden Name"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Active Address (Raw)">
+                            <field name="x_detail_active_address_line1" string="Address Line 1"/>
+                            <field name="x_detail_active_address_line2" string="Address Line 2"/>
+                            <field name="x_detail_active_city" string="City"/>
+                            <field name="x_detail_active_state" string="State"/>
+                            <field name="x_detail_active_zip" string="ZIP"/>
+                            <field name="x_detail_active_country" string="Country"/>
+                        </group>
+                        <group string="USPS / CASS">
+                            <field name="x_detail_active_carrier_code" string="Carrier Code"/>
+                            <field name="x_detail_active_dpc" string="DPC"/>
+                            <field name="x_detail_active_postal_lot" string="Postal LOT"/>
+                            <field name="x_detail_active_usps_type" string="USPS Type"/>
+                            <field name="x_detail_active_cass_result_code" string="CASS Result Code"/>
+                            <field name="x_detail_active_send_no_mail" string="Do Not Mail"/>
+                            <field name="x_detail_active_send_no_magazine" string="Do Not Send Magazine"/>
+                            <field name="x_detail_active_is_undeliverable" string="Undeliverable"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Household">
+                            <field name="x_detail_spouse_first_name" string="Spouse First Name"/>
+                            <field name="x_detail_spouse_last_name" string="Spouse Last Name"/>
+                            <field name="x_detail_head_of_household_num" string="Head of Household #"/>
+                            <field name="x_detail_is_head_of_household" string="Is Head of Household"/>
+                        </group>
+                        <group string="Phones &amp; Email (Raw)">
+                            <field name="x_detail_email_address" string="Email Address"/>
+                            <field name="x_detail_home_area_code" string="Home Area Code"/>
+                            <field name="x_detail_home_phone" string="Home Phone"/>
+                            <field name="x_detail_home_phone_ext" string="Home Phone Ext"/>
+                            <field name="x_detail_cell_area_code" string="Cell Area Code"/>
+                            <field name="x_detail_cell_phone" string="Cell Phone"/>
+                            <field name="x_detail_fax_area_code" string="Fax Area Code"/>
+                            <field name="x_detail_fax_phone" string="Fax Phone"/>
+                            <field name="x_detail_work_area_code" string="Work Area Code"/>
+                            <field name="x_detail_work_phone" string="Work Phone"/>
+                            <field name="x_detail_work_phone_ext" string="Work Phone Ext"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Dates / Years">
+                            <field name="x_last_life_date" string="Last Life Date"/>
+                            <field name="x_last_hon_life_date" string="Last Honor Life Date"/>
+                            <field name="x_detail_pey_start_year" string="PEY Start Year"/>
+                            <field name="x_detail_per_start_year" string="PER Start Year"/>
+                            <field name="x_detail_poy_start_year" string="POY Start Year"/>
+                        </group>
+                        <group string="Other">
+                            <field name="x_branch_of_service" string="Branch of Service"/>
+                            <field name="x_discharge_type" string="Discharge Type"/>
+                            <field name="x_discharge_date" string="Discharge Date"/>
+                            <field name="x_sortfield" string="Sort Field"/>
+                            <field name="x_original_index" string="Original Index"/>
+                            <field name="x_detail_user_value_001" string="User Value 001"/>
+                            <field name="x_detail_user_value_002" string="User Value 002"/>
+                            <field name="x_detail_user_value_003" string="User Value 003"/>
+                            <field name="x_detail_user_value_004" string="User Value 004"/>
+                            <field name="x_detail_user_value_005" string="User Value 005"/>
+                            <field name="x_detail_user_value_006" string="User Value 006"/>
+                            <field name="x_detail_user_value_007" string="User Value 007"/>
+                            <field name="x_detail_user_value_008" string="User Value 008"/>
+                            <field name="x_detail_user_value_009" string="User Value 009"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+

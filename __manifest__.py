@@ -1,0 +1,22 @@
+{
+    "name": "Elks Contacts",
+    "version": "1.0",
+    "category": "Contacts",
+    "summary": "Manage Elks Member Contact Information",
+    "author": "Danny Santiago",
+    "website": "https://dannysantiago.info",
+    "depends": ["base", "contacts"],
+    "data": [
+        "views/elks_contact_views.xml",
+        "views/elks_menus.xml",
+        "views/elks_action.xml",
+        "views/res_users_elks_views.xml",
+        "views/res_partner_kanban_elks.xml",
+        "views/res_partner_officer_views.xml",
+        "views/res_partner_search_elks.xml",
+        "views/res_partner_lodge_records_views.xml",
+        "data/elks_cron.xml",
+    ],
+    "installable": True,
+    "application": True,
+}

@@ -1,0 +1,31 @@
+<odoo>
+    <data>
+        <!-- Server action the menu will call -->
+        <record id="ir_actions_server_update_elk_members" model="ir.actions.server">
+            <field name="name">Update Elk Members</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="state">code</field>
+            <field name="code"><![CDATA[
+count = records.action_update_elk_members() if records else env['res.partner'].action_update_elk_members()
+action = {
+    'type': 'ir.actions.client',
+    'tag': 'display_notification',
+    'params': {'title': 'Update Elk Members', 'message': f'Processed {count} contact(s).', 'type': 'success', 'sticky': False}
+}
+            ]]></field>
+        </record>
+
+        <!-- Your "Actions" submenu under Contacts; pick a middle sequence (e.g. 40) -->
+        <menuitem id="elks_menu_actions"
+                  name="Actions"
+                  parent="contacts.menu_contacts"
+                  sequence="40"/>
+
+        <!-- Menu item that triggers the server action -->
+        <menuitem id="elks_menu_update_members"
+                  name="Update Elk Members"
+                  parent="elks_menu_actions"
+                  action="elkscontacts.ir_actions_server_update_elk_members"
+                  sequence="10"/>
+    </data>
+</odoo>
