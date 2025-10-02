@@ -1,6 +1,6 @@
 {
     "name": "Elks Contacts",
-    "version": "1.0",
+    "version": "1.2",
     "category": "Contacts",
     "summary": "Manage Elks Member Contact Information",
     "author": "Danny Santiago",

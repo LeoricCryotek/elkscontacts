@@ -1,10 +1,17 @@
-from odoo import models, fields, api
+# -*- coding: utf-8 -*-
+# Copyright (C) 2025
+# License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0.en.html)
+
+from odoo import api, fields, models, _
+from odoo.exceptions import ValidationError
 
 
 class ResPartner(models.Model):
     _inherit = "res.partner"
 
-    ##Local Data
+    # ----------------------------
+    # Local (chapter-specific) data
+    # ----------------------------
     x_local_door_code = fields.Char("Door Code", help="Local building or door access code.")
     x_local_has_key = fields.Boolean("Has Key")
     x_local_volunteer_active = fields.Boolean("Volunteer Active")
@@ -12,14 +19,18 @@ class ResPartner(models.Model):
     x_local_kitchen = fields.Boolean("Kitchen")
     x_local_sanitation = fields.Boolean("Sanitation")
 
+    # ----------------------------
     # Membership / Lodge
+    # ----------------------------
     x_detail_id = fields.Char("DetailID", index=True)
     x_detail_lodge_id = fields.Char("DetailLodgeID")
     x_detail_lodge_num = fields.Char("DetailLodgeNum")
     x_detail_member_num = fields.Char("DetailMemberNum", index=True)
     x_lodge_report_lodge_name = fields.Char("LodgeReportLodgeName")
 
+    # ----------------------------
     # Name components / salutation
+    # ----------------------------
     x_detail_name_prefix = fields.Char("DetailNamePrefix")
     x_detail_first_name = fields.Char("DetailFirstName")
     x_detail_name_salutation = fields.Char("DetailNameSalutation")  # maps to title
@@ -27,12 +38,16 @@ class ResPartner(models.Model):
     x_detail_last_name = fields.Char("DetailLastName")
     x_detail_name_suffix = fields.Char("DetailNameSuffix")
 
+    # ----------------------------
     # Elks specifics / accounting
+    # ----------------------------
     x_detail_elk_title = fields.Char("DetailElkTitle")
     x_detail_delinquent_months = fields.Integer("DetailDelinquentMonths")
     x_detail_dues_paid_to_date = fields.Date("DetailDuesPaidToDate")
 
+    # ----------------------------
     # Address (source) + USPS/CASS
+    # ----------------------------
     x_detail_active_address_line1 = fields.Char("DetailActiveAddressLine1")
     x_detail_active_address_line2 = fields.Char("DetailActiveAddressLine2")
     x_detail_active_city = fields.Char("DetailActiveCity")
@@ -50,13 +65,17 @@ class ResPartner(models.Model):
     x_detail_active_is_undeliverable = fields.Boolean("DetailActiveIsUndeliverable")
     x_detail_active_send_no_magazine = fields.Boolean("DetailActiveSendNoMagazine")
 
+    # ----------------------------
     # Household
+    # ----------------------------
     x_detail_spouse_first_name = fields.Char("DetailSpouseFirstName")
     x_detail_spouse_last_name = fields.Char("DetailSpouseLastName")
     x_detail_head_of_household_num = fields.Char("DetailHeadOfHouseholdNum")
     x_detail_is_head_of_household = fields.Boolean("DetailIsHeadOfHousehold")
 
+    # ----------------------------
     # Phones / Email (raw)
+    # ----------------------------
     x_detail_home_area_code = fields.Char("DetailHomeAreaCode")
     x_detail_home_phone = fields.Char("DetailHomePhone")
     x_detail_home_phone_ext = fields.Char("DetailHomePhoneExt")
@@ -73,7 +92,9 @@ class ResPartner(models.Model):
 
     x_detail_email_address = fields.Char("DetailEmailAddress")
 
+    # ----------------------------
     # User values
+    # ----------------------------
     x_detail_user_value_001 = fields.Char("DetailUserValue001")
     x_detail_user_value_002 = fields.Char("DetailUserValue002")
     x_detail_user_value_003 = fields.Char("DetailUserValue003")
@@ -84,14 +105,18 @@ class ResPartner(models.Model):
     x_detail_user_value_008 = fields.Char("DetailUserValue008")
     x_detail_user_value_009 = fields.Char("DetailUserValue009")
 
+    # ----------------------------
     # Dates / Years
+    # ----------------------------
     x_last_life_date = fields.Date("LastLifeDate")
     x_last_hon_life_date = fields.Date("LastHonLifeDate")
     x_detail_pey_start_year = fields.Integer("DetailPEYStartYear")
     x_detail_per_start_year = fields.Integer("DetailPERStartYear")
     x_detail_poy_start_year = fields.Integer("DetailPOYStartYear")
 
+    # ----------------------------
     # Misc
+    # ----------------------------
     x_maiden_name = fields.Char("MaidenName")
     x_enotices_ok = fields.Boolean("eNoticesOK")
     x_branch_of_service = fields.Char("branchOfService")
@@ -100,6 +125,9 @@ class ResPartner(models.Model):
     x_sortfield = fields.Char("Sortfield")
     x_original_index = fields.Char("OriginalIndex")
 
+    # ----------------------------
+    # Officers
+    # ----------------------------
     x_elks_officer_position = fields.Selection([
         ('exalted_ruler', 'Exalted Ruler'),
         ('leading_knight', 'Leading Knight'),
@@ -108,7 +136,7 @@ class ResPartner(models.Model):
         ('secretary', 'Secretary'),
         ('treasurer', 'Treasurer'),
         ('tiler', 'Tiler'),
-        ('boardchairman', 'Board Chairman'),
+        ('boardchair', 'Board Chair'),
         ('trustee1y', '1 Year Trustee'),
         ('trustee2y', '2 Year Trustee'),
         ('trustee3y', '3 Year Trustee'),
@@ -118,108 +146,50 @@ class ResPartner(models.Model):
         ('organist', 'Organist'),
     ], string='Elks Officer Position', index=True, help="Officer role held by this member.")
 
-    x_elks_officer_type = fields.Selection([
-        ('elected', 'Elected Officer'),
-        ('appointed', 'Appointed Officer'),
-    ], string='Officer Type', compute='_compute_x_elks_officer_type', store=True)
-
+    x_elks_officer_type = fields.Selection(
+        [('elected', 'Elected Officer'), ('appointed', 'Appointed Officer')],
+        string='Officer Type', compute='_compute_x_elks_officer_type', store=True
+    )
     x_is_elks_officer = fields.Boolean(
-        string='Is Elks Officer', compute='_compute_x_is_elks_officer', store=True)
+        string='Is Elks Officer', compute='_compute_x_is_elks_officer', store=True
+    )
 
-    # DB-level guarantee: only one of each role globally (NULL allowed many times)
+    # DB-level guarantees
     _sql_constraints = [
         ('unique_elks_officer_position',
          'unique(x_elks_officer_position)',
          'There can be only one holder for each Elks officer position.'),
+        ('res_partner_uniq_member_num',
+         'unique(x_detail_member_num)',
+         'Another contact already has this Elks Member Number.'),
     ]
 
-    @api.constrains('x_elks_officer_position', 'active')
-    def _check_unique_officer_position(self):
-        """Friendly error before the SQL kicks in, and clearer message."""
-        for rec in self:
-            pos = rec.x_elks_officer_position
-            if not pos:
-                continue
-            other = self.search([
-                ('id', '!=', rec.id),
-                ('x_elks_officer_position', '=', pos),
-            ], limit=1)
-            if other:
-                label = dict(self._fields['x_elks_officer_position'].selection).get(pos, pos)
-                raise ValidationError(_(
-                    "Only one member can be '%s'. Current holder: %s"
-                ) % (label, other.display_name))
+    # ==========================================
+    # Helpers
+    # ==========================================
+    def _prepare_person_defaults(self, vals):
+        """Force individual (person) flags for import/create/write."""
+        vals = dict(vals)
+        vals.setdefault('company_type', 'person')
+        if vals.get('company_type') == 'person':
+            vals['is_company'] = False
+            vals.setdefault('type', 'contact')
+            vals['company_name'] = False
+        return vals
 
-    @api.depends('x_elks_officer_position')
-    def _compute_x_elks_officer_type(self):
-        elected = {
-            'exalted_ruler', 'leading_knight', 'loyal_knight',
-            'lecturing_knight', 'secretary', 'treasurer'
-        }
-        for rec in self:
-            if rec.x_elks_officer_position in elected:
-                rec.x_elks_officer_type = 'elected'
-            elif rec.x_elks_officer_position:
-                rec.x_elks_officer_type = 'appointed'
-            else:
-                rec.x_elks_officer_type = False
+    def _elks_compose_name(self, vals=None):
+        """Compose display name from Elks name parts."""
+        if vals is None:
+            first = (self.x_detail_first_name or "").strip()
+            middle = (self.x_detail_middle_name or "").strip()
+            last = (self.x_detail_last_name or "").strip()
+        else:
+            first = (vals.get("x_detail_first_name") or "").strip()
+            middle = (vals.get("x_detail_middle_name") or "").strip()
+            last = (vals.get("x_detail_last_name") or "").strip()
+        parts = [p for p in (first, middle, last) if p]
+        return " ".join(parts).strip()
 
-    @api.depends('x_elks_officer_position')
-    def _compute_x_is_elks_officer(self):
-        for rec in self:
-            rec.x_is_elks_officer = bool(rec.x_elks_officer_position)
-    # -------- mapping button (unchanged) --------
-    def action_apply_elks_mapping(self):
-        for rec in self:
-            vals = {}
-
-            # Combine name parts -> name
-            parts = [rec.x_detail_first_name, rec.x_detail_middle_name, rec.x_detail_last_name]
-            name_combined = " ".join([p.strip() for p in parts if p and p.strip()])
-            if name_combined and name_combined != rec.name:
-                vals["name"] = name_combined
-
-            # Title from salutation
-            title = rec._find_title(rec.x_detail_name_salutation)
-            if title and rec.title != title:
-                vals["title"] = title.id
-
-            # Email
-            if rec.x_detail_email_address and (rec.email or "").strip() != rec.x_detail_email_address.strip():
-                vals["email"] = rec.x_detail_email_address.strip()
-
-            # Address
-            if rec.x_detail_active_address_line1:
-                vals["street"] = rec.x_detail_active_address_line1
-            if rec.x_detail_active_address_line2:
-                vals["street2"] = rec.x_detail_active_address_line2
-            if rec.x_detail_active_city:
-                vals["city"] = rec.x_detail_active_city
-            if rec.x_detail_active_zip:
-                vals["zip"] = rec.x_detail_active_zip
-
-            country = rec._find_country(rec.x_detail_active_country)
-            if country:
-                vals["country_id"] = country.id
-            state = rec._find_state(rec.x_detail_active_state, country or rec.country_id)
-            if state:
-                vals["state_id"] = state.id
-
-            # Phones
-            home = rec._compose_phone(rec.x_detail_home_area_code, rec.x_detail_home_phone, rec.x_detail_home_phone_ext)
-            if home and (rec.phone or "").strip() != home:
-                vals["phone"] = home
-            mobile = rec._compose_phone(rec.x_detail_cell_area_code, rec.x_detail_cell_phone, None)
-            if mobile and (rec.mobile or "").strip() != mobile:
-                vals["mobile"] = mobile
-            fax = rec._compose_phone(rec.x_detail_fax_area_code, rec.x_detail_fax_phone, None)
-            if fax and (rec.fax or "").strip() != fax:
-                vals["fax"] = fax
-
-            if vals:
-                rec.write(vals)
-
-    # helpers
     def _compose_phone(self, area, number, ext=None):
         area = (area or "").strip()
         number = (number or "").strip()
@@ -268,161 +238,250 @@ class ResPartner(models.Model):
                 return t
         return Title.create({"name": name})
 
-    # --- helper to build display name from x_ fields ---
-    def _elks_compose_name(self, vals=None):
-        """
-        Compose 'name' from x_detail_first_name + x_detail_middle_name + x_detail_last_name.
-        Accepts optional vals (dict) from create/write, otherwise uses record fields.
-        """
-        if vals is None:
-            first = (self.x_detail_first_name or "").strip()
-            middle = (self.x_detail_middle_name or "").strip()
-            last = (self.x_detail_last_name or "").strip()
-        else:
-            first = (vals.get("x_detail_first_name") or getattr(self, "x_detail_first_name", "") or "").strip()
-            middle = (vals.get("x_detail_middle_name") or getattr(self, "x_detail_middle_name", "") or "").strip()
-            last = (vals.get("x_detail_last_name") or getattr(self, "x_detail_last_name", "") or "").strip()
+    # ==========================================
+    # Compute / Constraints
+    # ==========================================
+    @api.depends('x_elks_officer_position')
+    def _compute_x_elks_officer_type(self):
+        elected = {
+            'exalted_ruler', 'leading_knight', 'loyal_knight',
+            'lecturing_knight', 'secretary', 'treasurer'
+        }
+        for rec in self:
+            if rec.x_elks_officer_position in elected:
+                rec.x_elks_officer_type = 'elected'
+            elif rec.x_elks_officer_position:
+                rec.x_elks_officer_type = 'appointed'
+            else:
+                rec.x_elks_officer_type = False
 
-        parts = [p for p in (first, middle, last) if p]
-        return " ".join(parts).strip()
+    @api.depends('x_elks_officer_position')
+    def _compute_x_is_elks_officer(self):
+        for rec in self:
+            rec.x_is_elks_officer = bool(rec.x_elks_officer_position)
 
+    @api.constrains('x_elks_officer_position', 'active')
+    def _check_unique_officer_position(self):
+        """Friendly check before SQL constraint for clearer message."""
+        for rec in self:
+            pos = rec.x_elks_officer_position
+            if not pos:
+                continue
+            other = self.search([
+                ('id', '!=', rec.id),
+                ('x_elks_officer_position', '=', pos),
+            ], limit=1)
+            if other:
+                label = dict(self._fields['x_elks_officer_position'].selection).get(pos, pos)
+                raise ValidationError(_(
+                    "Only one member can be '%s'. Current holder: %s"
+                ) % (label, other.display_name))
+
+    # ==========================================
+    # Create / Write
+    # ==========================================
     @api.model_create_multi
     def create(self, vals_list):
-        # Ensure 'name' exists for each row; build it from x_ name parts if missing.
+        """
+        Import-friendly create:
+          - If x_detail_member_num matches an existing partner (even archived),
+            update that record (merge) instead of creating a duplicate.
+          - Always force created/updated records to be individuals (company_type=person, is_company=False).
+          - Ensures a non-empty 'name' (built from x_ name parts, email or member num).
+          - After processing, run `action_update_elk_members()` on touched records to sync core fields.
+        """
+        def norm(num):
+            return str(num).strip() if num else ""
+
+        # Prefetch all existing partners that match incoming member numbers
+        nums = list({norm(v.get("x_detail_member_num")) for v in vals_list if v.get("x_detail_member_num")})
+        existing = self.with_context(active_test=False).search(
+            [("x_detail_member_num", "in", [n for n in nums if n])]
+        ) if nums else self.browse()
+        by_num = {rec.x_detail_member_num.strip(): rec for rec in existing if rec.x_detail_member_num}
+
+        touched = self.browse()
+        to_create = []
+
         for vals in vals_list:
+            vals = dict(vals)  # copy per row
+
+            # Force person flags
+            vals = self._prepare_person_defaults(vals)
+
+            # Ensure 'name'
             if not (vals.get("name") and str(vals.get("name")).strip()):
                 composed = self._elks_compose_name(vals)
                 if composed:
                     vals["name"] = composed
+                elif vals.get("x_detail_email_address"):
+                    vals["name"] = vals["x_detail_email_address"]
+                elif vals.get("x_detail_member_num"):
+                    vals["name"] = f"Member {vals['x_detail_member_num']}"
                 else:
-                    # Fallbacks if name parts are empty in the CSV row
-                    if vals.get("x_detail_email_address"):
-                        vals["name"] = vals["x_detail_email_address"]
-                    elif vals.get("x_detail_member_num"):
-                        vals["name"] = f"Member {vals['x_detail_member_num']}"
-                    else:
-                        vals["name"] = "Unnamed Contact"
-        return super().create(vals_list)
+                    vals["name"] = "Unnamed Contact"
+
+            num = norm(vals.get("x_detail_member_num"))
+
+            if num and num in by_num:
+                # Update (merge) existing; keep the same member number
+                rec = by_num[num]
+                upd = dict(vals)
+                upd.pop("x_detail_member_num", None)
+                rec.write(upd)
+
+                # Ensure it remains a person
+                if rec.is_company or rec.company_type != "person":
+                    rec.write({"is_company": False, "company_type": "person"})
+
+                touched |= rec
+            else:
+                to_create.append(vals)
+
+        if to_create:
+            created = super(ResPartner, self).create(to_create)
+            # Index newly created by member number for potential later use
+            for r in created:
+                if r.x_detail_member_num:
+                    by_num[r.x_detail_member_num.strip()] = r
+            touched |= created
+
+        # Run post-import mapping on all touched records
+        if touched:
+            overwrite = bool(self.env.context.get("elks_overwrite", True))
+            touched.action_update_elk_members(overwrite=overwrite, only_with_elks=False)
+
+        return touched
 
     def write(self, vals):
-        # If someone updates first/middle/last and 'name' is blank, repopulate it.
+        """
+        Keep Elks members as individuals even on later edits;
+        backfill 'name' if user cleared it while editing name parts.
+        """
+        # Force person for any record that has a member number unless caller explicitly changes company fields
+        if ("is_company" not in vals) and ("company_type" not in vals):
+            if any(rec.x_detail_member_num for rec in self):
+                vals = self._prepare_person_defaults(vals)
+
         res = super().write(vals)
-        name_parts_changed = any(k in vals for k in (
-            "x_detail_first_name", "x_detail_middle_name", "x_detail_last_name"
-        ))
-        if name_parts_changed:
+
+        # If name parts changed and 'name' is blank, repopulate it
+        if any(k in vals for k in ("x_detail_first_name", "x_detail_middle_name", "x_detail_last_name")):
             for rec in self:
-                if not (rec.name and rec.name.strip()):
+                if not (rec.name or "").strip():
                     composed = rec._elks_compose_name()
                     if composed:
                         super(ResPartner, rec).write({"name": composed})
         return res
 
-        # --- helper to build display name from x_ fields ---
-        def _elks_compose_name(self, vals=None):
-            """
-            Compose 'name' from x_detail_first_name + x_detail_middle_name + x_detail_last_name.
-            Accepts optional vals (dict) from create/write, otherwise uses record fields.
-            """
-            if vals is None:
-                first = (self.x_detail_first_name or "").strip()
-                middle = (self.x_detail_middle_name or "").strip()
-                last = (self.x_detail_last_name or "").strip()
-            else:
-                first = (vals.get("x_detail_first_name") or getattr(self, "x_detail_first_name", "") or "").strip()
-                middle = (vals.get("x_detail_middle_name") or getattr(self, "x_detail_middle_name", "") or "").strip()
-                last = (vals.get("x_detail_last_name") or getattr(self, "x_detail_last_name", "") or "").strip()
+    # ==========================================
+    # Mapping helpers / actions
+    # ==========================================
+    def action_apply_elks_mapping(self):
+        """
+        Copy Elks x_* fields into native partner fields (name/title/email/address/phones).
+        This method is conservative: it sets values when x_* is present and different.
+        """
+        for rec in self:
+            vals = {}
 
-            parts = [p for p in (first, middle, last) if p]
-            return " ".join(parts).strip()
+            # Combine name parts -> name
+            parts = [rec.x_detail_first_name, rec.x_detail_middle_name, rec.x_detail_last_name]
+            name_combined = " ".join([p.strip() for p in parts if p and p.strip()])
+            if name_combined and name_combined != (rec.name or ""):
+                vals["name"] = name_combined
 
-        @api.model_create_multi
-        def create(self, vals_list):
-            # Ensure 'name' exists for each row; build it from x_ name parts if missing.
-            for vals in vals_list:
-                if not (vals.get("name") and str(vals.get("name")).strip()):
-                    composed = self._elks_compose_name(vals)
-                    if composed:
-                        vals["name"] = composed
-                    else:
-                        # Fallbacks if name parts are empty in the CSV row
-                        if vals.get("x_detail_email_address"):
-                            vals["name"] = vals["x_detail_email_address"]
-                        elif vals.get("x_detail_member_num"):
-                            vals["name"] = f"Member {vals['x_detail_member_num']}"
-                        else:
-                            vals["name"] = "Unnamed Contact"
-            return super().create(vals_list)
+            # Title from salutation
+            title = rec._find_title(rec.x_detail_name_salutation)
+            if title and rec.title != title:
+                vals["title"] = title.id
 
-        def write(self, vals):
-            # If someone updates first/middle/last and 'name' is blank, repopulate it.
-            res = super().write(vals)
-            name_parts_changed = any(k in vals for k in (
-                "x_detail_first_name", "x_detail_middle_name", "x_detail_last_name"
-            ))
-            if name_parts_changed:
-                for rec in self:
-                    if not (rec.name and rec.name.strip()):
-                        composed = rec._elks_compose_name()
-                        if composed:
-                            super(ResPartner, rec).write({"name": composed})
-            return res
+            # Email
+            x_email = (rec.x_detail_email_address or "").strip()
+            if x_email and (rec.email or "").strip() != x_email:
+                vals["email"] = x_email
 
-        def action_copy_core_from_elks(self, overwrite=False):
-            """
-            Copy core contact fields from imported x_* fields to native res.partner fields:
-            street, street2, city, state_id, zip (extra), country_id (extra), email, phone, mobile.
+            # Address
+            if rec.x_detail_active_address_line1:
+                vals["street"] = rec.x_detail_active_address_line1
+            if rec.x_detail_active_address_line2:
+                vals["street2"] = rec.x_detail_active_address_line2
+            if rec.x_detail_active_city:
+                vals["city"] = rec.x_detail_active_city
+            if rec.x_detail_active_zip:
+                vals["zip"] = rec.x_detail_active_zip
 
-            If overwrite is False (default), we only fill targets that are empty.
-            If overwrite is True, we replace existing values.
-            """
-            for rec in self:
-                vals = {}
+            country = rec._find_country(rec.x_detail_active_country)
+            if country:
+                vals["country_id"] = country.id
+            state = rec._find_state(rec.x_detail_active_state, country or rec.country_id)
+            if state:
+                vals["state_id"] = state.id
 
-                def set_if(value, target_field, current_value):
-                    if not value:
-                        return
-                    if overwrite or not (current_value or "").strip():
-                        vals[target_field] = value
+            # Phones
+            home = rec._compose_phone(rec.x_detail_home_area_code, rec.x_detail_home_phone, rec.x_detail_home_phone_ext)
+            if home and (rec.phone or "").strip() != home:
+                vals["phone"] = home
+            mobile = rec._compose_phone(rec.x_detail_cell_area_code, rec.x_detail_cell_phone, None)
+            if mobile and (rec.mobile or "").strip() != mobile:
+                vals["mobile"] = mobile
+            fax = rec._compose_phone(rec.x_detail_fax_area_code, rec.x_detail_fax_phone, None)
+            if fax and (rec.fax or "").strip() != fax:
+                vals["fax"] = fax
 
-                # Address lines + city + zip (zip is extra but usually needed)
-                set_if(rec.x_detail_active_address_line1, "street", rec.street)
-                set_if(rec.x_detail_active_address_line2, "street2", rec.street2)
-                set_if(rec.x_detail_active_city, "city", rec.city)
-                set_if(rec.x_detail_active_zip, "zip", rec.zip)
+            if vals:
+                rec.write(vals)
 
-                # Country & State resolution (state_id specifically requested; country_id added for completeness)
-                country = rec._find_country(rec.x_detail_active_country) if rec.x_detail_active_country else False
-                if country and (overwrite or not rec.country_id):
-                    vals["country_id"] = country.id
+    def action_copy_core_from_elks(self, overwrite=False):
+        """
+        Copy core contact fields from imported x_* fields to native res.partner fields:
+        street, street2, city, state_id, zip, country_id, email, phone, mobile.
 
-                state = rec._find_state(rec.x_detail_active_state,
-                                        country or rec.country_id) if rec.x_detail_active_state else False
-                if state and (overwrite or not rec.state_id):
-                    vals["state_id"] = state.id
+        If overwrite is False (default), only fill targets that are empty.
+        If overwrite is True, replace existing values.
+        """
+        for rec in self:
+            vals = {}
 
-                # Email
-                set_if((rec.x_detail_email_address or "").strip(), "email", rec.email or "")
+            def set_if(value, target_field, current_value):
+                if not value:
+                    return
+                if overwrite or not (current_value or "").strip():
+                    vals[target_field] = value
 
-                # Phone (home) and Mobile (cell) from area code + number (+ ext)
-                home = rec._compose_phone(rec.x_detail_home_area_code, rec.x_detail_home_phone,
-                                          rec.x_detail_home_phone_ext)
-                if home and (overwrite or not (rec.phone or "").strip()):
-                    vals["phone"] = home
+            # Address lines + city + zip
+            set_if(rec.x_detail_active_address_line1, "street", rec.street)
+            set_if(rec.x_detail_active_address_line2, "street2", rec.street2)
+            set_if(rec.x_detail_active_city, "city", rec.city)
+            set_if(rec.x_detail_active_zip, "zip", rec.zip)
 
-                mobile = rec._compose_phone(rec.x_detail_cell_area_code, rec.x_detail_cell_phone, None)
-                if mobile and (overwrite or not (rec.mobile or "").strip()):
-                    vals["mobile"] = mobile
+            # Country & State
+            country = rec._find_country(rec.x_detail_active_country) if rec.x_detail_active_country else False
+            if country and (overwrite or not rec.country_id):
+                vals["country_id"] = country.id
 
-                if vals:
-                    rec.write(vals)
+            state = rec._find_state(rec.x_detail_active_state, country or rec.country_id) if rec.x_detail_active_state else False
+            if state and (overwrite or not rec.state_id):
+                vals["state_id"] = state.id
+
+            # Email
+            set_if((rec.x_detail_email_address or "").strip(), "email", rec.email or "")
+
+            # Phone (home) and Mobile (cell)
+            home = rec._compose_phone(rec.x_detail_home_area_code, rec.x_detail_home_phone, rec.x_detail_home_phone_ext)
+            if home and (overwrite or not (rec.phone or "").strip()):
+                vals["phone"] = home
+
+            mobile = rec._compose_phone(rec.x_detail_cell_area_code, rec.x_detail_cell_phone, None)
+            if mobile and (overwrite or not (rec.mobile or "").strip()):
+                vals["mobile"] = mobile
+
+            if vals:
+                rec.write(vals)
 
     def action_update_elk_members(self, overwrite=False, only_with_elks=True):
         """
-        Apply both Elks mappings on:
-          - self, if called on a recordset (e.g., selection in list/form)
-          - otherwise, all contacts that have any Elks x_* fields populated (default)
-        Returns: int (number of partners processed)
+        Apply both Elks mappings...
         """
         Partner = self.env['res.partner']
 
@@ -440,11 +499,11 @@ class ResPartner(models.Model):
                     'x_detail_work_area_code', 'x_detail_work_phone', 'x_detail_work_phone_ext',
                     'x_detail_first_name', 'x_detail_middle_name', 'x_detail_last_name',
                 ]
-                # Build OR domain: '|', '|', ..., (f1 != False), (f2 != False), ...
+
+                # Build a proper prefix-notation OR domain:
+                # ['|','|', <t1>, <t2>, <t3>, ...]
                 terms = [(f, '!=', False) for f in fields_to_check]
-                domain = []
-                for i, term in enumerate(terms):
-                    domain = [term] if i == 0 else ['|'] + domain + [term]
+                domain = (['|'] * (len(terms) - 1)) + terms  # correct syntax
             else:
                 domain = []
 
@@ -453,10 +512,6 @@ class ResPartner(models.Model):
         if not partners:
             return 0
 
-        # 1) Name/title/email/address/phones → native (your earlier method)
         partners.action_apply_elks_mapping()
-
-        # 2) Core contact fields (address/phones/email) → native (your earlier method)
         partners.action_copy_core_from_elks(overwrite=overwrite)
-
         return len(partners)
