@@ -20,6 +20,9 @@
                 <field name="x_local_kitchen" invisible="not x_local_volunteer_active"/>
                 <field name="x_local_sanitation" invisible="not x_local_volunteer_active"/>
               </group>
+              <group string="Membership Status">
+                <field name="x_is_not_member" string="Non-Elks Member"/>
+              </group>
             </group>
           </page>
         </xpath>

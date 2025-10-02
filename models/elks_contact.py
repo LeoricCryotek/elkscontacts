@@ -22,6 +22,7 @@ class ResPartner(models.Model):
     # ----------------------------
     # Membership / Lodge
     # ----------------------------
+    x_is_not_member = fields.Boolean("Is not an Elks Member", index=True)
     x_detail_id = fields.Char("DetailID", index=True)
     x_detail_lodge_id = fields.Char("DetailLodgeID")
     x_detail_lodge_num = fields.Char("DetailLodgeNum")
