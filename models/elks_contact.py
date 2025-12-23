@@ -424,11 +424,14 @@ class ResPartner(models.Model):
             if home and (rec.phone or "").strip() != home:
                 vals["phone"] = home
             mobile = rec._compose_phone(rec.x_detail_cell_area_code, rec.x_detail_cell_phone, None)
-            if mobile and (rec.mobile or "").strip() != mobile:
-                vals["mobile"] = mobile
+            if mobile and "mobile" in rec._fields:
+                if (getattr(rec, "mobile", "") or "").strip() != mobile:
+                    vals["mobile"] = mobile
+
             fax = rec._compose_phone(rec.x_detail_fax_area_code, rec.x_detail_fax_phone, None)
-            if fax and (rec.fax or "").strip() != fax:
-                vals["fax"] = fax
+            if fax and "fax" in rec._fields:
+                if (getattr(rec, "fax", "") or "").strip() != fax:
+                    vals["fax"] = fax
 
             if vals:
                 rec.write(vals)
@@ -474,8 +477,10 @@ class ResPartner(models.Model):
                 vals["phone"] = home
 
             mobile = rec._compose_phone(rec.x_detail_cell_area_code, rec.x_detail_cell_phone, None)
-            if mobile and (overwrite or not (rec.mobile or "").strip()):
-                vals["mobile"] = mobile
+            if mobile and "mobile" in rec._fields:
+                current_mobile = (getattr(rec, "mobile", "") or "").strip()
+                if overwrite or not current_mobile:
+                    vals["mobile"] = mobile
 
             if vals:
                 rec.write(vals)
