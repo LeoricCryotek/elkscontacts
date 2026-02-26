@@ -1,18 +1,29 @@
 <odoo>
-  <data>
-    <record id="view_partner_form_elks_officers" model="ir.ui.view">
-      <field name="name">res.partner.form.elks.officers</field>
-      <field name="model">res.partner</field>
-      <field name="inherit_id" ref="base.view_partner_form"/>
-      <field name="priority" eval="20"/>
-      <field name="arch" type="xml">
-        <!-- Drop a new group after categories -->
-        <xpath expr="//field[@name='vat']" position="after">
-            <field name="x_elks_officer_position"/>
-            <field name="x_elks_officer_type" readonly="1"/>
-            <field name="x_is_elks_officer" readonly="1"/>
-        </xpath>
-      </field>
-    </record>
-  </data>
+  <record id="view_partner_form_elks_row_after_address" model="ir.ui.view">
+    <field name="name">res.partner.form.elks.row.after.address</field>
+    <field name="model">res.partner</field>
+    <field name="inherit_id" ref="base.view_partner_form"/>
+    <field name="priority" eval="30"/>
+    <field name="arch" type="xml">
+
+      <!-- Insert a new label+field row AFTER the entire Address box -->
+      <xpath expr="//div[@class='o_address_format']" position="after">
+        <!-- make trigger available -->
+        <field name="x_is_not_member" invisible="1"/>
+
+        <!-- Left-side label (same style as Address/Company labels) -->
+        <span class="o_form_label o_td_label">Elks</span>
+
+        <!-- Right-side content box -->
+        <div class="o_td_field" invisible="x_is_not_member">
+          <div class="d-flex flex-wrap gap-2">
+            <field name="x_elks_officer_position" string="Officer Position"/>
+            <field name="x_elks_officer_type" readonly="1" string="Officer Type"/>
+            <field name="x_is_elks_officer" readonly="1" string="Is Officer"/>
+          </div>
+        </div>
+      </xpath>
+
+    </field>
+  </record>
 </odoo>
