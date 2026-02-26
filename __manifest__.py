@@ -1,10 +1,11 @@
 {
     "name": "Elks Contacts",
-    "version": "1.4",
+    "version": "19.0.1.4",
     "category": "Contacts",
     "summary": "Manage Elks Member Contact Information",
     "author": "Danny Santiago",
     "website": "https://dannysantiago.info",
+    "license": "LGPL-3",
     "depends": ["base", "contacts"],
     "data": [
         "views/elks_contact_views.xml",
