@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Add Elks badges (member / volunteer / linked) to the partner list -->
+    <record id="view_partner_tree_elks" model="ir.ui.view">
+        <field name="name">res.partner.tree.elks</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list/field[@name='complete_name']" position="after">
+                <field name="x_detail_member_num" string="Member #" optional="show"/>
+                <field name="x_is_member" string="Member"
+                       widget="boolean_toggle" optional="show"/>
+                <field name="x_is_volunteer" string="Volunteer"
+                       widget="boolean_toggle" optional="show"/>
+                <field name="x_volunteer_employee_id" string="Employee Link"
+                       optional="show"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

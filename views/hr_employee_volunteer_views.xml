@@ -1,0 +1,100 @@
+<odoo>
+
+  <!-- Volunteer Training tab on hr.employee form, before Settings -->
+  <record id="view_employee_form_volunteer_training" model="ir.ui.view">
+    <field name="name">hr.employee.form.volunteer.training</field>
+    <field name="model">hr.employee</field>
+    <field name="inherit_id" ref="hr.view_employee_form"/>
+    <field name="priority" eval="30"/>
+    <field name="arch" type="xml">
+      <xpath expr="//page[@name='hr_settings']" position="before">
+        <page string="Volunteer Training" name="volunteer_training"
+              invisible="not x_is_volunteer">
+          <field name="x_is_volunteer" invisible="1"/>
+          <group>
+            <group>
+              <field name="x_training_complete" widget="boolean_toggle" readonly="1"/>
+            </group>
+          </group>
+          <field name="x_volunteer_training_ids">
+            <list editable="bottom">
+              <field name="training_area"/>
+              <field name="is_trained"/>
+              <field name="date_trained"/>
+              <field name="trainer_id"/>
+              <field name="expiration_date"/>
+              <field name="is_expired" column_invisible="1"/>
+              <field name="notes"/>
+            </list>
+          </field>
+        </page>
+      </xpath>
+    </field>
+  </record>
+
+  <!-- Show volunteer badge at top of employee form -->
+  <record id="view_employee_form_volunteer_flag" model="ir.ui.view">
+    <field name="name">hr.employee.form.volunteer.flag</field>
+    <field name="model">hr.employee</field>
+    <field name="inherit_id" ref="hr.view_employee_form"/>
+    <field name="priority" eval="20"/>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='job_title']" position="after">
+        <field name="x_is_volunteer" widget="boolean_toggle" string="Volunteer"/>
+      </xpath>
+    </field>
+  </record>
+
+  <!-- Elks contact link section on employee form.
+       Setting work_contact_id to an Elks member auto-flags that contact
+       as a volunteer (handled in HrEmployee._sync_contact_volunteer_flag). -->
+  <record id="view_employee_form_elks_contact_link" model="ir.ui.view">
+    <field name="name">hr.employee.form.elks.contact.link</field>
+    <field name="model">hr.employee</field>
+    <field name="inherit_id" ref="hr.view_employee_form"/>
+    <field name="priority" eval="25"/>
+    <field name="arch" type="xml">
+      <xpath expr="//page[@name='hr_settings']" position="before">
+        <page string="Elks Contact" name="elks_contact_link">
+          <group>
+            <group string="Link to Elks Contact">
+              <field name="work_contact_id"
+                     string="Elks Contact"
+                     options="{'no_create_edit': True}"
+                     domain="[('x_is_member', '=', True)]"/>
+            </group>
+            <group string="How this works">
+              <div colspan="2" class="text-muted">
+                <p>
+                  Set the <b>Elks Contact</b> field above to link this
+                  employee to an existing Elks member record.  When you
+                  save, the contact will automatically be flagged as a
+                  <b>Volunteer</b>, and its employee-record link will
+                  point back to this employee.
+                </p>
+                <p>
+                  Clearing the field removes the back-link on the
+                  contact but does not archive this employee.
+                </p>
+              </div>
+            </group>
+          </group>
+        </page>
+      </xpath>
+    </field>
+  </record>
+
+  <!-- Add training status to employee list view -->
+  <record id="view_employee_list_volunteer" model="ir.ui.view">
+    <field name="name">hr.employee.list.volunteer</field>
+    <field name="model">hr.employee</field>
+    <field name="inherit_id" ref="hr.view_employee_tree"/>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='department_id']" position="after">
+        <field name="x_is_volunteer" optional="show"/>
+        <field name="x_training_complete" string="Training OK" optional="show"/>
+      </xpath>
+    </field>
+  </record>
+
+</odoo>

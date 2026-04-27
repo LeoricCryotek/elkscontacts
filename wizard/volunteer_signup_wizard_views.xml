@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="view_elks_volunteer_signup_wizard_form" model="ir.ui.view">
+        <field name="name">elks.volunteer.signup.wizard.form</field>
+        <field name="model">elks.volunteer.signup.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Volunteer Signup">
+
+                <!-- ===== STEP 1: Enter Info ===== -->
+                <div invisible="state != 'input'">
+                    <div class="alert alert-info" role="status">
+                        Enter the volunteer's basic info below. We'll check if they
+                        already exist in Contacts before creating a new record.
+                    </div>
+                    <group>
+                        <group string="Name">
+                            <field name="first_name" placeholder="First name"/>
+                            <field name="last_name" placeholder="Last name"/>
+                        </group>
+                        <group string="Contact &amp; Kiosk">
+                            <field name="phone" placeholder="208-555-1234"/>
+                            <field name="email" placeholder="email@example.com"/>
+                            <field name="pin" password="True"
+                                   placeholder="4-6 digit PIN for kiosk clock-in"/>
+                        </group>
+                    </group>
+                    <field name="state" invisible="1"/>
+                </div>
+
+                <!-- ===== STEP 2: Review Matches ===== -->
+                <div invisible="state != 'match'">
+                    <div class="alert alert-warning" role="status">
+                        We found existing contacts that may be this volunteer.
+                        Click <b>Pick This One</b> to link, or <b>Create New Volunteer</b>
+                        to make a fresh record.
+                    </div>
+                    <group>
+                        <group>
+                            <field name="first_name" readonly="1"/>
+                            <field name="last_name" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="email" readonly="1"/>
+                            <field name="phone" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="match_line_ids" nolabel="1">
+                        <list create="false" delete="false">
+                            <field name="partner_name"/>
+                            <field name="partner_email"/>
+                            <field name="partner_phone"/>
+                            <field name="partner_is_member" string="Member"
+                                   widget="boolean"/>
+                            <field name="partner_is_volunteer" string="Volunteer"
+                                   widget="boolean"/>
+                            <field name="confidence" widget="badge"
+                                   decoration-success="confidence == 'high'"
+                                   decoration-warning="confidence == 'medium'"
+                                   decoration-info="confidence == 'low'"/>
+                            <field name="match_reason"/>
+                            <button name="action_select" type="object"
+                                    string="Pick This One"
+                                    class="btn-sm btn-primary"/>
+                        </list>
+                    </field>
+                    <field name="selected_partner_id" invisible="1"/>
+                    <field name="match_count" invisible="1"/>
+                </div>
+
+                <!-- ===== STEP 3: Done ===== -->
+                <div invisible="state != 'done'">
+                    <div class="alert alert-success" role="status">
+                        <field name="result_message" readonly="1" nolabel="1"/>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="result_partner_id" readonly="1"/>
+                            <button name="action_open_contact" type="object"
+                                    string="Open Contact"
+                                    class="btn-sm btn-link"
+                                    invisible="not result_partner_id"/>
+                        </group>
+                        <group>
+                            <field name="result_employee_id" readonly="1"/>
+                            <button name="action_open_employee" type="object"
+                                    string="Open Employee"
+                                    class="btn-sm btn-link"
+                                    invisible="not result_employee_id"/>
+                        </group>
+                    </group>
+                </div>
+
+                <footer>
+                    <!-- Step 1: Search -->
+                    <button name="action_search_matches" type="object"
+                            string="Register Volunteer" class="btn-primary"
+                            invisible="state != 'input'"/>
+                    <!-- Step 2: Create new (skip matches) -->
+                    <button name="action_create_new_volunteer" type="object"
+                            string="Create New Volunteer" class="btn-secondary"
+                            invisible="state != 'match'"/>
+                    <!-- Close -->
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_elks_volunteer_signup_wizard" model="ir.actions.act_window">
+        <field name="name">Volunteer Signup</field>
+        <field name="res_model">elks.volunteer.signup.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

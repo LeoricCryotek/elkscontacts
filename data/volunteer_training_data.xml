@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ============================================================ -->
+        <!-- Resume‑line type: "Volunteer Training"                       -->
+        <!-- ============================================================ -->
+        <record id="resume_type_volunteer_training" model="hr.resume.line.type">
+            <field name="name">Volunteer Training</field>
+            <field name="sequence">50</field>
+            <field name="is_course">True</field>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- Skill type: "Volunteer Certifications"  (is_certification)   -->
+        <!-- ============================================================ -->
+        <record id="skill_type_volunteer_cert" model="hr.skill.type">
+            <field name="name">Volunteer Certifications</field>
+            <field name="sequence">100</field>
+            <field name="is_certification">True</field>
+        </record>
+
+        <!-- Skill levels -->
+        <record id="skill_level_not_started" model="hr.skill.level">
+            <field name="name">Not Started</field>
+            <field name="skill_type_id" ref="skill_type_volunteer_cert"/>
+            <field name="level_progress">0</field>
+            <field name="default_level">True</field>
+        </record>
+        <record id="skill_level_in_training" model="hr.skill.level">
+            <field name="name">In Training</field>
+            <field name="skill_type_id" ref="skill_type_volunteer_cert"/>
+            <field name="level_progress">50</field>
+        </record>
+        <record id="skill_level_certified" model="hr.skill.level">
+            <field name="name">Certified</field>
+            <field name="skill_type_id" ref="skill_type_volunteer_cert"/>
+            <field name="level_progress">100</field>
+        </record>
+
+        <!-- Individual skills — one per training area -->
+        <record id="skill_kitchen" model="hr.skill">
+            <field name="name">Kitchen</field>
+            <field name="skill_type_id" ref="skill_type_volunteer_cert"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="skill_sanitation" model="hr.skill">
+            <field name="name">Sanitation</field>
+            <field name="skill_type_id" ref="skill_type_volunteer_cert"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="skill_pos" model="hr.skill">
+            <field name="name">POS</field>
+            <field name="skill_type_id" ref="skill_type_volunteer_cert"/>
+            <field name="sequence">30</field>
+        </record>
+        <record id="skill_office" model="hr.skill">
+            <field name="name">Office</field>
+            <field name="skill_type_id" ref="skill_type_volunteer_cert"/>
+            <field name="sequence">40</field>
+        </record>
+        <record id="skill_lounge_support" model="hr.skill">
+            <field name="name">Lounge Support</field>
+            <field name="skill_type_id" ref="skill_type_volunteer_cert"/>
+            <field name="sequence">50</field>
+        </record>
+        <record id="skill_bartender" model="hr.skill">
+            <field name="name">Bartender</field>
+            <field name="skill_type_id" ref="skill_type_volunteer_cert"/>
+            <field name="sequence">60</field>
+        </record>
+        <record id="skill_event_setup" model="hr.skill">
+            <field name="name">Event Setup</field>
+            <field name="skill_type_id" ref="skill_type_volunteer_cert"/>
+            <field name="sequence">70</field>
+        </record>
+        <record id="skill_first_aid" model="hr.skill">
+            <field name="name">First Aid / Safety</field>
+            <field name="skill_type_id" ref="skill_type_volunteer_cert"/>
+            <field name="sequence">80</field>
+        </record>
+
+    </data>
+</odoo>

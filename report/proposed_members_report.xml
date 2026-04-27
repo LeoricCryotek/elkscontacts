@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!--  Proposed Members List – QWeb PDF Report                     -->
+    <!--  Matches the lodge "Proposed" printout format:               -->
+    <!--    Date / Applicant Name(s)  |  Proposed By                  -->
+    <!-- ============================================================ -->
+
+    <record id="action_report_proposed_members" model="ir.actions.report">
+        <field name="name">Proposed Members List</field>
+        <field name="model">elks.membership.application</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">elkscontacts.report_proposed_members</field>
+        <field name="report_file">elkscontacts.report_proposed_members</field>
+        <field name="binding_model_id" ref="model_elks_membership_application"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Companion PDF report for download -->
+    <record id="action_report_proposed_members_pdf" model="ir.actions.report">
+        <field name="name">Proposed Members List (PDF)</field>
+        <field name="model">elks.membership.application</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">elkscontacts.report_proposed_members</field>
+        <field name="report_file">elkscontacts.report_proposed_members</field>
+        <field name="binding_model_id" ref="model_elks_membership_application"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_proposed_members">
+        <t t-call="web.html_container">
+            <t t-set="settings" t-value="docs[0].env['elks.lodge.settings'].sudo().search([], limit=1)" t-if="docs"/>
+
+            <div class="page" style="font-size: 11px;">
+                <!-- ===== LODGE HEADER WITH LOGOS ===== -->
+                <table style="width: 100%; margin-bottom: 10px; border: none;">
+                    <tr>
+                        <td style="width: 15%; text-align: center; vertical-align: middle; border: none; padding: 0;">
+                            <t t-if="settings and settings.logo_primary">
+                                <img t-att-src="image_data_uri(settings.logo_primary)"
+                                     style="max-height: 80px; max-width: 100px;" alt="Elks USA"/>
+                            </t>
+                        </td>
+                        <td style="text-align: center; vertical-align: middle; border: none; padding: 0 10px;">
+                            <h2 style="font-size: 22px; margin: 0 0 2px 0; color: #333;">
+                                <t t-if="settings and settings.name"><span t-field="settings.name"/></t>
+                                <t t-else="">Elks Lodge</t>
+                                <t t-if="settings and settings.lodge_number">
+                                    #<span t-field="settings.lodge_number"/>
+                                </t>
+                            </h2>
+                            <p style="color: #777; font-size: 11px; margin: 0;">
+                                Benevolent and Protective Order of Elks
+                            </p>
+                            <h3 style="font-size: 18px; margin: 6px 0 0 0; color: #003366;">
+                                Proposed Members Report
+                            </h3>
+                        </td>
+                        <td style="width: 15%; text-align: center; vertical-align: middle; border: none; padding: 0;">
+                            <t t-if="settings and settings.logo_lodge">
+                                <img t-att-src="image_data_uri(settings.logo_lodge)"
+                                     style="max-height: 80px; max-width: 100px;" alt="Lodge Logo"/>
+                            </t>
+                        </td>
+                    </tr>
+                </table>
+                <div style="border-top: 2px solid #003366; margin-bottom: 15px;"/>
+
+                <!-- Title row -->
+                <table style="width:100%; margin-bottom:30px;">
+                    <tr>
+                        <td style="width:50%; vertical-align:top;">
+                            <h2 style="margin:0; font-weight:bold; font-size: 32px;">Proposed</h2>
+                        </td>
+                        <td style="width:50%; text-align:right; vertical-align:top;">
+                            <h2 style="margin:0; font-weight:bold; font-size: 32px;">Proposed by</h2>
+                        </td>
+                    </tr>
+                </table>
+
+                    <!-- Group by proposer + date for the classic layout -->
+                    <table style="width:100%; border-collapse:collapse; font-size: 18px;">
+                        <t t-set="sorted_apps" t-value="docs.sorted(key=lambda a: (a.date_proposed or ''))"/>
+                        <t t-foreach="sorted_apps" t-as="app">
+                            <tr style="vertical-align:top;">
+                                <td style="width:55%; padding:10px 12px 10px 0; border-bottom:1px solid #ccc;">
+                                    <span t-if="app.date_proposed"
+                                          t-field="app.date_proposed"
+                                          t-options='{"format": "M/d/yyyy"}'
+                                          style="display:block; font-size:15px; color:#666;"/>
+                                    <strong style="font-size: 20px;" t-field="app.applicant_display_name"/>
+                                    <t t-if="app.application_type != 'new'">
+                                        <span style="font-size:14px; color:#888; margin-left:8px;">
+                                            (<t t-esc="dict(app._fields['application_type'].selection).get(app.application_type, '')"/>)
+                                        </span>
+                                    </t>
+                                    <t t-if="app.applicant_city or app.applicant_state_id">
+                                        <br/>
+                                        <span style="font-size:16px; color:#555;">
+                                            <t t-if="app.applicant_city"><t t-esc="app.applicant_city"/></t>
+                                            <t t-if="app.applicant_city and app.applicant_state_id">, </t>
+                                            <t t-if="app.applicant_state_id"><t t-esc="app.applicant_state_id.name"/></t>
+                                        </span>
+                                    </t>
+                                </td>
+                                <td style="width:45%; padding:10px 0; text-align:right; border-bottom:1px solid #ccc; font-size: 20px;">
+                                    <span t-field="app.proposer_id"/>
+                                </td>
+                            </tr>
+                        </t>
+                    </table>
+
+                    <t t-if="not docs">
+                        <p style="margin-top:20px; color:#999; font-style:italic; font-size: 18px;">
+                            No proposed members to display.
+                        </p>
+                    </t>
+
+                    <!-- Footer with count and date -->
+                    <div style="margin-top:30px; font-size:14px; color:#888;">
+                        <span>Total: <t t-esc="len(docs)"/> applicant(s)</span>
+                        <span style="float:right;">
+                            Printed: <span t-esc="time.strftime('%m/%d/%Y')"/>
+                        </span>
+                    </div>
+                </div>
+        </t>
+    </template>
+
+    <!-- ============================================================ -->
+    <!--  Membership Application Detail – Individual Print            -->
+    <!-- ============================================================ -->
+    <record id="action_report_membership_application" model="ir.actions.report">
+        <field name="name">Membership Application</field>
+        <field name="model">elks.membership.application</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">elkscontacts.report_membership_application_detail</field>
+        <field name="report_file">elkscontacts.report_membership_application_detail</field>
+        <field name="binding_model_id" ref="model_elks_membership_application"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Companion PDF report for download -->
+    <record id="action_report_membership_application_pdf" model="ir.actions.report">
+        <field name="name">Membership Application (PDF)</field>
+        <field name="model">elks.membership.application</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">elkscontacts.report_membership_application_detail</field>
+        <field name="report_file">elkscontacts.report_membership_application_detail</field>
+        <field name="binding_model_id" ref="model_elks_membership_application"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_membership_application_detail">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="app">
+                <t t-set="settings" t-value="app.env['elks.lodge.settings'].sudo().search([], limit=1)"/>
+
+                <div class="page" style="font-size: 11px;">
+                    <!-- ===== LODGE HEADER WITH LOGOS ===== -->
+                    <table style="width: 100%; margin-bottom: 10px; border: none;">
+                        <tr>
+                            <td style="width: 15%; text-align: center; vertical-align: middle; border: none; padding: 0;">
+                                <t t-if="settings and settings.logo_primary">
+                                    <img t-att-src="image_data_uri(settings.logo_primary)"
+                                         style="max-height: 80px; max-width: 100px;" alt="Elks USA"/>
+                                </t>
+                            </td>
+                            <td style="text-align: center; vertical-align: middle; border: none; padding: 0 10px;">
+                                <h2 style="font-size: 22px; margin: 0 0 2px 0; color: #333;">
+                                    <t t-if="settings and settings.name"><span t-field="settings.name"/></t>
+                                    <t t-else="">Elks Lodge</t>
+                                    <t t-if="settings and settings.lodge_number">
+                                        #<span t-field="settings.lodge_number"/>
+                                    </t>
+                                </h2>
+                                <p style="color: #777; font-size: 11px; margin: 0;">
+                                    Benevolent and Protective Order of Elks
+                                </p>
+                                <h3 style="font-size: 18px; margin: 6px 0 0 0; color: #003366;">
+                                    Membership Application
+                                </h3>
+                            </td>
+                            <td style="width: 15%; text-align: center; vertical-align: middle; border: none; padding: 0;">
+                                <t t-if="settings and settings.logo_lodge">
+                                    <img t-att-src="image_data_uri(settings.logo_lodge)"
+                                         style="max-height: 80px; max-width: 100px;" alt="Lodge Logo"/>
+                                </t>
+                            </td>
+                        </tr>
+                    </table>
+                    <div style="border-top: 2px solid #003366; margin-bottom: 15px;"/>
+
+                    <div style="font-family: Arial, sans-serif; font-size: 16px;">
+                        <h2 style="text-align:center; margin-bottom:20px; font-size: 26px;">
+                            <t t-if="app.application_type == 'reinstatement'">Application for Reinstatement</t>
+                            <t t-elif="app.application_type == 'affiliation'">Affiliation / Transfer</t>
+                            <t t-else="">Proposal for Membership</t>
+                             — <span t-field="app.name"/>
+                        </h2>
+
+                        <table style="width:100%; margin-bottom:16px;">
+                            <tr>
+                                <td style="width:33%;">
+                                    <strong>Type:</strong>
+                                    <span t-field="app.application_type"/>
+                                </td>
+                                <td style="width:33%; text-align:center;">
+                                    <strong>Stage:</strong>
+                                    <span t-field="app.stage"/>
+                                </td>
+                                <td style="width:33%; text-align:right;">
+                                    <strong>Lodge Year:</strong>
+                                    <span t-field="app.lodge_year"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Reinstatement details -->
+                        <t t-if="app.application_type != 'new'">
+                            <h4 style="border-bottom:1px solid #333; padding-bottom:4px;">Previous Membership</h4>
+                            <table style="width:100%; margin-bottom:16px;">
+                                <tr>
+                                    <td style="width:50%;">
+                                        <strong>Previous Lodge:</strong> <span t-field="app.reinstatement_previous_lodge"/><br/>
+                                        <strong>State:</strong> <span t-field="app.reinstatement_previous_state"/><br/>
+                                        <strong>Member #:</strong> <span t-field="app.reinstatement_previous_member_num"/>
+                                    </td>
+                                    <td style="width:50%;">
+                                        <t t-if="app.application_type == 'reinstatement'">
+                                            <strong>Reason for Leaving:</strong> <span t-field="app.reinstatement_reason"/><br/>
+                                            <strong>Reinstatement Fee:</strong> $<t t-esc="'%.2f' % (app.reinstatement_fee or 0)"/>
+                                        </t>
+                                        <t t-if="app.application_type == 'affiliation'">
+                                            <strong>Affiliation Fee:</strong> $<t t-esc="'%.2f' % (app.affiliation_fee or 0)"/>
+                                        </t>
+                                        <br/>
+                                        <strong>Prorated Dues:</strong> $<t t-esc="'%.2f' % (app.prorated_dues or 0)"/>
+                                    </td>
+                                </tr>
+                            </table>
+                        </t>
+
+                        <!-- Proposer -->
+                        <h4 style="border-bottom:1px solid #333; padding-bottom:4px;">Proposer</h4>
+                        <table style="width:100%; margin-bottom:16px;">
+                            <tr>
+                                <td style="width:50%;">
+                                    <strong>Name:</strong> <span t-field="app.proposer_id"/><br/>
+                                    <strong>Member #:</strong> <span t-field="app.proposer_member_num"/><br/>
+                                    <strong>Lodge #:</strong> <span t-field="app.proposer_lodge_num"/>
+                                </td>
+                                <td style="width:50%;" t-if="app.endorser_id">
+                                    <strong>Endorsed by:</strong> <span t-field="app.endorser_id"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Applicant -->
+                        <h4 style="border-bottom:1px solid #333; padding-bottom:4px;">Applicant</h4>
+                        <table style="width:100%; margin-bottom:16px;">
+                            <tr>
+                                <td style="width:50%;">
+                                    <strong>Name:</strong> <span t-field="app.applicant_display_name"/><br/>
+                                    <strong>Sex:</strong> <span t-field="app.applicant_sex"/><br/>
+                                    <strong>Date of Birth:</strong> <span t-field="app.applicant_date_of_birth"/><br/>
+                                    <strong>Birth City/State:</strong>
+                                    <t t-if="app.applicant_birth_city"><t t-esc="app.applicant_birth_city"/></t>
+                                    <t t-if="app.applicant_birth_city and app.applicant_birth_state_id">, </t>
+                                    <t t-if="app.applicant_birth_state_id"><t t-esc="app.applicant_birth_state_id.name"/></t>
+                                </td>
+                                <td style="width:50%;">
+                                    <strong>Spouse:</strong> <span t-field="app.applicant_spouse_name"/><br/>
+                                    <strong>Occupation:</strong> <span t-field="app.applicant_occupation"/><br/>
+                                    <strong>Employer:</strong> <span t-field="app.applicant_employer"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Contact -->
+                        <h4 style="border-bottom:1px solid #333; padding-bottom:4px;">Contact Information</h4>
+                        <table style="width:100%; margin-bottom:16px;">
+                            <tr>
+                                <td style="width:50%;">
+                                    <span t-field="app.applicant_street"/><br/>
+                                    <t t-if="app.applicant_street2"><span t-field="app.applicant_street2"/><br/></t>
+                                    <span t-field="app.applicant_city"/>
+                                    <t t-if="app.applicant_state_id">, <span t-field="app.applicant_state_id"/></t>
+                                    <t t-if="app.applicant_zip"> <span t-field="app.applicant_zip"/></t>
+                                </td>
+                                <td style="width:50%;">
+                                    <strong>Home:</strong> <span t-field="app.applicant_phone"/><br/>
+                                    <strong>Cell:</strong> <span t-field="app.applicant_mobile"/><br/>
+                                    <strong>Email:</strong> <span t-field="app.applicant_email"/><br/>
+                                    <strong>Business:</strong> <span t-field="app.applicant_business_phone"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Military -->
+                        <t t-if="app.applicant_served_military and app.applicant_military_branch">
+                            <h4 style="border-bottom:1px solid #333; padding-bottom:4px;">Military Service</h4>
+                            <table style="width:100%; margin-bottom:16px;">
+                                <tr>
+                                    <td>
+                                        <strong>Branch:</strong> <span t-field="app.applicant_military_branch"/>
+                                        &amp;nbsp;&amp;nbsp;
+                                        <strong>Discharge:</strong> <span t-field="app.applicant_military_discharge_type"/>
+                                        &amp;nbsp;&amp;nbsp;
+                                        <strong>Date:</strong> <span t-field="app.applicant_military_discharge_date"/>
+                                    </td>
+                                </tr>
+                            </table>
+                        </t>
+
+                        <!-- Application Questions -->
+                        <h4 style="border-bottom:1px solid #333; padding-bottom:4px;">Application Questions</h4>
+                        <table style="width:100%; margin-bottom:16px;">
+                            <tr>
+                                <td style="width:50%;">Belief in God: <strong t-if="app.q_belief_in_god">Yes</strong><strong t-else="">No</strong></td>
+                                <td style="width:50%;">US Citizen: <strong t-if="app.q_us_citizen">Yes</strong><strong t-else="">No</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Assumes Obligation: <strong t-if="app.q_willing_to_assume_obligation">Yes</strong><strong t-else="">No</strong></td>
+                                <td>No Subversive Affiliation: <strong t-if="app.q_no_subversive_affiliation">Yes</strong><strong t-else="">No</strong></td>
+                            </tr>
+                            <tr>
+                                <td>No Felony Conviction: <strong t-if="app.q_never_convicted_felony">Yes</strong><strong t-else="">No</strong></td>
+                                <td>Bona Fide Resident: <strong t-if="app.q_bona_fide_resident">Yes</strong><strong t-else="">No</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Good Character: <strong t-if="app.q_good_character">Yes</strong><strong t-else="">No</strong></td>
+                                <td>Authorizes Electronic: <strong t-if="app.q_authorize_electronic">Yes</strong><strong t-else="">No</strong></td>
+                            </tr>
+                        </table>
+
+                        <!-- Investigation -->
+                        <t t-if="app.investigator_id or app.investigation_notes">
+                            <h4 style="border-bottom:1px solid #333; padding-bottom:4px;">Investigation</h4>
+                            <table style="width:100%; margin-bottom:16px;">
+                                <tr>
+                                    <td style="width:50%;">
+                                        <strong>Investigator:</strong> <span t-field="app.investigator_id"/><br/>
+                                        <strong>Assigned:</strong> <span t-field="app.date_investigation_assigned"/><br/>
+                                        <strong>Completed:</strong> <span t-field="app.date_investigation_complete"/>
+                                    </td>
+                                    <td style="width:50%;">
+                                        <strong>Result:</strong> <span t-field="app.investigation_result"/>
+                                    </td>
+                                </tr>
+                                <t t-if="app.investigation_notes">
+                                    <tr>
+                                        <td colspan="2">
+                                            <strong>Notes:</strong><br/>
+                                            <span t-field="app.investigation_notes"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </table>
+                        </t>
+
+                        <!-- Balloting -->
+                        <t t-if="app.ballot_result">
+                            <h4 style="border-bottom:1px solid #333; padding-bottom:4px;">Balloting</h4>
+                            <table style="width:100%; margin-bottom:16px;">
+                                <tr>
+                                    <td>
+                                        <strong>Date:</strong> <span t-field="app.date_balloting"/>
+                                        &amp;nbsp;&amp;nbsp;
+                                        <strong>Result:</strong> <span t-field="app.ballot_result"/>
+                                        &amp;nbsp;&amp;nbsp;
+                                        <t t-if="app.ballot_all_in_favor">
+                                            <strong>All in Favor (Unanimous)</strong>
+                                        </t>
+                                        <t t-else="">
+                                            <strong>For:</strong> <span t-field="app.ballot_votes_for"/>
+                                            &amp;nbsp;&amp;nbsp;
+                                            <strong>Against:</strong> <span t-field="app.ballot_votes_against"/>
+                                        </t>
+                                    </td>
+                                </tr>
+                            </table>
+                        </t>
+
+                        <!-- Key Dates Timeline -->
+                        <h4 style="border-bottom:1px solid #333; padding-bottom:4px;">Timeline</h4>
+                        <table style="width:100%;">
+                            <tr>
+                                <td style="width:25%;"><strong>Proposed:</strong><br/><span t-field="app.date_proposed"/></td>
+                                <td style="width:25%;"><strong>Balloted:</strong><br/><span t-field="app.date_balloting"/></td>
+                                <td style="width:25%;"><strong>Elected:</strong><br/><span t-field="app.date_elected"/></td>
+                                <td style="width:25%;"><strong>Initiated:</strong><br/><span t-field="app.date_initiated"/></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

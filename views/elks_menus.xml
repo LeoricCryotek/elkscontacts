@@ -27,5 +27,129 @@ action = {
                   parent="elks_menu_actions"
                   action="elkscontacts.ir_actions_server_update_elk_members"
                   sequence="10"/>
+
+        <!-- Server action: Print current officer roster -->
+        <record id="ir_actions_server_print_officer_roster" model="ir.actions.server">
+            <field name="name">Print Officer Roster (Current Year)</field>
+            <field name="model_id" ref="elkscontacts.model_elks_officer_term"/>
+            <field name="state">code</field>
+            <field name="code"><![CDATA[
+today = datetime.date.today()
+if today.month >= 4:
+    year_str = "%s-%s" % (today.year, today.year + 1)
+else:
+    year_str = "%s-%s" % (today.year - 1, today.year)
+terms = env['elks.officer.term'].search([('lodge_year', '=', year_str)])
+if terms:
+    action = env.ref('elkscontacts.action_report_officer_roster').report_action(terms)
+else:
+    action = {
+        'type': 'ir.actions.client',
+        'tag': 'display_notification',
+        'params': {
+            'title': 'Officer Roster',
+            'message': 'No officer terms found for lodge year %s.' % year_str,
+            'type': 'warning',
+            'sticky': False,
+        }
+    }
+            ]]></field>
+        </record>
+
+        <!-- Menu: Print Officer Roster -->
+        <menuitem id="elks_menu_print_roster"
+                  name="Print Officer Roster"
+                  parent="elks_menu_actions"
+                  action="elkscontacts.ir_actions_server_print_officer_roster"
+                  sequence="20"/>
+
+        <!-- Menu: Volunteer Signup -->
+        <menuitem id="elks_menu_volunteer_signup"
+                  name="Volunteer Signup"
+                  parent="elks_menu_actions"
+                  action="elkscontacts.action_elks_volunteer_signup_wizard"
+                  sequence="25"/>
+
+        <!-- Menu: Import from CLMS -->
+        <menuitem id="elks_menu_clms_import"
+                  name="Import from CLMS"
+                  parent="elks_menu_actions"
+                  action="elkscontacts.action_clms_import_wizard"
+                  sequence="5"/>
+
+        <!-- Menu: Merge Duplicate Employees -->
+        <menuitem id="elks_menu_merge_employees"
+                  name="Merge Duplicate Employees"
+                  parent="elks_menu_actions"
+                  action="elkscontacts.action_elks_employee_merge_wizard"
+                  sequence="30"/>
+
+        <!-- Officer Terms menu -->
+        <menuitem id="elks_menu_officer_terms"
+                  name="Officer Terms"
+                  parent="contacts.menu_contacts"
+                  action="elkscontacts.action_elks_officer_terms"
+                  sequence="30"/>
+
+        <!-- Committees menu -->
+        <menuitem id="elks_menu_committees"
+                  name="Committees"
+                  parent="contacts.menu_contacts"
+                  action="elkscontacts.action_elks_committee"
+                  sequence="35"/>
+
+        <menuitem id="elks_menu_committee_assignments"
+                  name="Committee Assignments"
+                  parent="elks_menu_actions"
+                  action="elkscontacts.action_elks_committee_assignment"
+                  sequence="40"/>
+
+        <!-- Membership Applications menu -->
+        <menuitem id="elks_menu_membership_applications"
+                  name="Membership Applications"
+                  parent="contacts.menu_contacts"
+                  action="elkscontacts.action_elks_membership_application"
+                  sequence="25"/>
+
+        <menuitem id="elks_menu_proposed_members"
+                  name="Proposed Members"
+                  parent="elks_menu_actions"
+                  action="elkscontacts.action_elks_membership_proposed"
+                  sequence="50"/>
+
+        <!-- Server action: Print Proposed Members List -->
+        <record id="ir_actions_server_print_proposed_list" model="ir.actions.server">
+            <field name="name">Print Proposed Members List</field>
+            <field name="model_id" ref="elkscontacts.model_elks_membership_application"/>
+            <field name="state">code</field>
+            <field name="code"><![CDATA[
+apps = env['elks.membership.application'].search([
+    ('stage', 'in', ('proposed', 'investigation', 'balloting', 'elected')),
+])
+if apps:
+    action = env.ref('elkscontacts.action_report_proposed_members').report_action(apps)
+else:
+    action = {
+        'type': 'ir.actions.client',
+        'tag': 'display_notification',
+        'params': {
+            'title': 'Proposed Members',
+            'message': 'No applications currently in the pipeline.',
+            'type': 'warning',
+            'sticky': False,
+        }
+    }
+            ]]></field>
+        </record>
+
+        <menuitem id="elks_menu_print_proposed"
+                  name="Print Proposed Members List"
+                  parent="elks_menu_actions"
+                  action="elkscontacts.ir_actions_server_print_proposed_list"
+                  sequence="55"/>
+        <!-- Move Configuration to last position in the Contacts menu bar -->
+        <menuitem id="contacts.res_partner_menu_config"
+                  name="Configuration"
+                  sequence="90"/>
     </data>
 </odoo>

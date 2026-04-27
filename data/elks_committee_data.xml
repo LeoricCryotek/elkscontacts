@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- =============================================================
+             STATUTORY COMMITTEES (Required for all lodges)
+             ============================================================= -->
+        <record id="committee_1000" model="elks.committee">
+            <field name="name">Auditing &amp; Accounting Committee</field>
+            <field name="sort_code">1000</field>
+            <field name="committee_type">statutory</field>
+
+            <field name="description">Reviews and audits the financial records of the lodge. Required by Grand Lodge statutes.</field>
+        </record>
+
+        <record id="committee_2000" model="elks.committee">
+            <field name="name">Activities Committee</field>
+            <field name="sort_code">2000</field>
+            <field name="committee_type">statutory</field>
+
+            <field name="description">Oversees community projects, youth activities, and charitable programs. Required by Grand Lodge statutes.</field>
+        </record>
+
+        <record id="committee_3000" model="elks.committee">
+            <field name="name">Fraternal Committee</field>
+            <field name="sort_code">3000</field>
+            <field name="committee_type">statutory</field>
+
+            <field name="description">Promotes fraternal spirit and Americanism programs within the lodge. Required by Grand Lodge statutes.</field>
+        </record>
+
+        <record id="committee_4000" model="elks.committee">
+            <field name="name">Accident Prevention Subcommittee</field>
+            <field name="sort_code">4000</field>
+            <field name="committee_type">statutory</field>
+
+            <field name="description">Addresses safety and accident prevention in lodge facilities. Required by Grand Lodge statutes.</field>
+        </record>
+
+        <record id="committee_5000" model="elks.committee">
+            <field name="name">PER Association</field>
+            <field name="sort_code">5000</field>
+            <field name="committee_type">statutory</field>
+
+            <field name="description">Past Exalted Rulers Association. Required by Grand Lodge statutes.</field>
+        </record>
+
+        <record id="committee_6000" model="elks.committee">
+            <field name="name">Standing Relief Subcommittee</field>
+            <field name="sort_code">6000</field>
+            <field name="committee_type">statutory</field>
+
+            <field name="description">Provides charitable relief and assistance to members and community. Required by Grand Lodge statutes.</field>
+        </record>
+
+        <record id="committee_7000" model="elks.committee">
+            <field name="name">Public Relations</field>
+            <field name="sort_code">7000</field>
+            <field name="committee_type">statutory</field>
+
+            <field name="description">Manages the lodge public image, media outreach, and communications. Required by Grand Lodge statutes.</field>
+        </record>
+
+        <!-- =============================================================
+             SUBCOMMITTEES (Under statutory committees)
+             ============================================================= -->
+
+        <!-- Under 2000 Activities Committee -->
+        <record id="committee_2010" model="elks.committee">
+            <field name="name">Community Project &amp; Activities Subcommittee</field>
+            <field name="sort_code">2010</field>
+            <field name="committee_type">subcommittee</field>
+            <field name="parent_committee_id" ref="committee_2000"/>
+        </record>
+
+        <record id="committee_2030" model="elks.committee">
+            <field name="name">Youth Activities Subcommittee</field>
+            <field name="sort_code">2030</field>
+            <field name="committee_type">subcommittee</field>
+            <field name="parent_committee_id" ref="committee_2000"/>
+        </record>
+
+        <record id="committee_2040" model="elks.committee">
+            <field name="name">Hoop Shoot Subcommittee</field>
+            <field name="sort_code">2040</field>
+            <field name="committee_type">subcommittee</field>
+            <field name="parent_committee_id" ref="committee_2000"/>
+        </record>
+
+        <record id="committee_2050" model="elks.committee">
+            <field name="name">Drug Awareness Subcommittee</field>
+            <field name="sort_code">2050</field>
+            <field name="committee_type">subcommittee</field>
+            <field name="parent_committee_id" ref="committee_2000"/>
+        </record>
+
+        <!-- Under 3000 Fraternal Committee -->
+        <record id="committee_3010" model="elks.committee">
+            <field name="name">Americanism Subcommittee</field>
+            <field name="sort_code">3010</field>
+            <field name="committee_type">subcommittee</field>
+            <field name="parent_committee_id" ref="committee_3000"/>
+        </record>
+
+        <record id="committee_3020" model="elks.committee">
+            <field name="name">Elks National Foundation Subcommittee</field>
+            <field name="sort_code">3020</field>
+            <field name="committee_type">subcommittee</field>
+            <field name="parent_committee_id" ref="committee_3000"/>
+        </record>
+
+        <record id="committee_3030" model="elks.committee">
+            <field name="name">Flag Day Subcommittee</field>
+            <field name="sort_code">3030</field>
+            <field name="committee_type">subcommittee</field>
+            <field name="parent_committee_id" ref="committee_3000"/>
+        </record>
+
+        <record id="committee_3040" model="elks.committee">
+            <field name="name">Elks Memorial Day Subcommittee</field>
+            <field name="sort_code">3040</field>
+            <field name="committee_type">subcommittee</field>
+            <field name="parent_committee_id" ref="committee_3000"/>
+        </record>
+
+        <record id="committee_3050" model="elks.committee">
+            <field name="name">Membership Subcommittee</field>
+            <field name="sort_code">3050</field>
+            <field name="committee_type">subcommittee</field>
+            <field name="parent_committee_id" ref="committee_3000"/>
+        </record>
+
+        <record id="committee_3060" model="elks.committee">
+            <field name="name">Lodge Activities Subcommittee</field>
+            <field name="sort_code">3060</field>
+            <field name="committee_type">subcommittee</field>
+            <field name="parent_committee_id" ref="committee_3000"/>
+        </record>
+
+        <record id="committee_3070" model="elks.committee">
+            <field name="name">Veterans Services Subcommittee</field>
+            <field name="sort_code">3070</field>
+            <field name="committee_type">subcommittee</field>
+            <field name="parent_committee_id" ref="committee_3000"/>
+        </record>
+
+        <!-- Standalone subcommittees (9000 series) -->
+        <record id="committee_9010" model="elks.committee">
+            <field name="name">Ritualistic Subcommittee</field>
+            <field name="sort_code">9010</field>
+            <field name="committee_type">subcommittee</field>
+        </record>
+
+        <record id="committee_9020" model="elks.committee">
+            <field name="name">Soccer Shoot Subcommittee</field>
+            <field name="sort_code">9020</field>
+            <field name="committee_type">subcommittee</field>
+        </record>
+
+        <record id="committee_9030" model="elks.committee">
+            <field name="name">Government Relations Subcommittee</field>
+            <field name="sort_code">9030</field>
+            <field name="committee_type">subcommittee</field>
+        </record>
+
+        <record id="committee_9040" model="elks.committee">
+            <field name="name">State Major Project Subcommittee</field>
+            <field name="sort_code">9040</field>
+            <field name="committee_type">subcommittee</field>
+        </record>
+
+        <!-- =============================================================
+             LODGE COMMITTEES (Discretionary, created by each lodge)
+             ============================================================= -->
+        <record id="committee_x250" model="elks.committee">
+            <field name="name">Board of Trustees</field>
+            <field name="sort_code">X250</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x260" model="elks.committee">
+            <field name="name">Food Caravan</field>
+            <field name="sort_code">X260</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x270" model="elks.committee">
+            <field name="name">Christmas Basket</field>
+            <field name="sort_code">X270</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x280" model="elks.committee">
+            <field name="name">Entertainment</field>
+            <field name="sort_code">X280</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x290" model="elks.committee">
+            <field name="name">Conventions</field>
+            <field name="sort_code">X290</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x300" model="elks.committee">
+            <field name="name">Publicity</field>
+            <field name="sort_code">X300</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x310" model="elks.committee">
+            <field name="name">Blood Drive</field>
+            <field name="sort_code">X310</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x320" model="elks.committee">
+            <field name="name">Breakfast/Dinners</field>
+            <field name="sort_code">X320</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x330" model="elks.committee">
+            <field name="name">Elk of the Year</field>
+            <field name="sort_code">X330</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x340" model="elks.committee">
+            <field name="name">Lodge Bulletin</field>
+            <field name="sort_code">X340</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x360" model="elks.committee">
+            <field name="name">Scholarships</field>
+            <field name="sort_code">X360</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x380" model="elks.committee">
+            <field name="name">Dictionary Program</field>
+            <field name="sort_code">X380</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x390" model="elks.committee">
+            <field name="name">Teenager Program</field>
+            <field name="sort_code">X390</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x400" model="elks.committee">
+            <field name="name">Building Maintenance</field>
+            <field name="sort_code">X400</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x410" model="elks.committee">
+            <field name="name">Family Picnic</field>
+            <field name="sort_code">X410</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x420" model="elks.committee">
+            <field name="name">Americanism Essay</field>
+            <field name="sort_code">X420</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x430" model="elks.committee">
+            <field name="name">IERH Poster</field>
+            <field name="sort_code">X430</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x440" model="elks.committee">
+            <field name="name">C-Notes</field>
+            <field name="sort_code">X440</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x450" model="elks.committee">
+            <field name="name">CLMS</field>
+            <field name="sort_code">X450</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x460" model="elks.committee">
+            <field name="name">Decorations</field>
+            <field name="sort_code">X460</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x470" model="elks.committee">
+            <field name="name">Greeter</field>
+            <field name="sort_code">X470</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x480" model="elks.committee">
+            <field name="name">Charity Fund Raising</field>
+            <field name="sort_code">X480</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x490" model="elks.committee">
+            <field name="name">Visitation of Sick</field>
+            <field name="sort_code">X490</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x500" model="elks.committee">
+            <field name="name">Officer Interest</field>
+            <field name="sort_code">X500</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x510" model="elks.committee">
+            <field name="name">Parties/Dances</field>
+            <field name="sort_code">X510</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x520" model="elks.committee">
+            <field name="name">Bridge/Card Clubs</field>
+            <field name="sort_code">X520</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x530" model="elks.committee">
+            <field name="name">Games/Bingo</field>
+            <field name="sort_code">X530</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x540" model="elks.committee">
+            <field name="name">Law &amp; Order</field>
+            <field name="sort_code">X540</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x550" model="elks.committee">
+            <field name="name">Disabled Children</field>
+            <field name="sort_code">X550</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x560" model="elks.committee">
+            <field name="name">Silent Auctions</field>
+            <field name="sort_code">X560</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x570" model="elks.committee">
+            <field name="name">Library</field>
+            <field name="sort_code">X570</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x571" model="elks.committee">
+            <field name="name">Investigative Committee</field>
+            <field name="sort_code">X571</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+        <record id="committee_x572" model="elks.committee">
+            <field name="name">Queen of Hearts</field>
+            <field name="sort_code">X572</field>
+            <field name="committee_type">lodge</field>
+        </record>
+
+    </data>
+</odoo>

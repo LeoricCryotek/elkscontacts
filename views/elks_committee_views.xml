@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===== Committee – List View ===== -->
+    <record id="view_elks_committee_tree" model="ir.ui.view">
+        <field name="name">elks.committee.tree</field>
+        <field name="model">elks.committee</field>
+        <field name="arch" type="xml">
+            <list string="Committees">
+                <field name="sort_code" string="Code"/>
+                <field name="name"/>
+                <field name="committee_type" widget="badge"
+                       decoration-danger="committee_type == 'statutory'"
+                       decoration-warning="committee_type == 'subcommittee'"
+                       decoration-info="committee_type == 'lodge'"/>
+                <field name="is_required" widget="boolean" string="Required"/>
+                <field name="parent_committee_id" optional="hide"/>
+                <field name="chair_id"/>
+                <field name="current_member_count" string="Members"/>
+                <field name="budget_amount" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ===== Committee – Form View ===== -->
+    <record id="view_elks_committee_form" model="ir.ui.view">
+        <field name="name">elks.committee.form</field>
+        <field name="model">elks.committee</field>
+        <field name="arch" type="xml">
+            <form string="Committee">
+                <sheet>
+                    <widget name="web_ribbon" title="Required"
+                            bg_color="text-bg-danger"
+                            invisible="not is_required"/>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="sort_code" string="Committee Code"/>
+                            <field name="code"/>
+                            <field name="committee_type"/>
+                            <field name="parent_committee_id"
+                                   invisible="committee_type != 'subcommittee'"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="chair_id"/>
+                            <field name="officer_liaison_id"/>
+                            <field name="budget_amount"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="current_member_count" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="description" placeholder="Purpose / description..."/>
+                    <notebook>
+                        <page string="Assignments">
+                            <field name="member_ids">
+                                <list editable="bottom">
+                                    <field name="partner_id"/>
+                                    <field name="role"/>
+                                    <field name="lodge_year"/>
+                                    <field name="date_appointed"/>
+                                    <field name="date_ended"/>
+                                    <field name="is_current" widget="boolean_toggle"/>
+                                    <field name="notes" optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Subcommittees" name="subcommittees"
+                              invisible="committee_type != 'statutory'">
+                            <field name="child_committee_ids">
+                                <list>
+                                    <field name="sort_code" string="Code"/>
+                                    <field name="name"/>
+                                    <field name="chair_id"/>
+                                    <field name="current_member_count" string="Members"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ===== Committee – Search View ===== -->
+    <record id="view_elks_committee_search" model="ir.ui.view">
+        <field name="name">elks.committee.search</field>
+        <field name="model">elks.committee</field>
+        <field name="arch" type="xml">
+            <search string="Committees">
+                <field name="name"/>
+                <field name="sort_code"/>
+                <field name="chair_id"/>
+                <separator/>
+                <filter string="Statutory" name="filter_statutory"
+                        domain="[('committee_type', '=', 'statutory')]"/>
+                <filter string="Subcommittee" name="filter_subcommittee"
+                        domain="[('committee_type', '=', 'subcommittee')]"/>
+                <filter string="Lodge" name="filter_lodge"
+                        domain="[('committee_type', '=', 'lodge')]"/>
+                <separator/>
+                <filter string="Required" name="filter_required"
+                        domain="[('is_required', '=', True)]"/>
+                <separator/>
+                <group>
+                    <filter string="Type" name="group_type"
+                            context="{'group_by': 'committee_type'}"/>
+                    <filter string="Parent Committee" name="group_parent"
+                            context="{'group_by': 'parent_committee_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ===== Actions ===== -->
+    <record id="action_elks_committee" model="ir.actions.act_window">
+        <field name="name">Committees</field>
+        <field name="res_model">elks.committee</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_elks_committee_search"/>
+    </record>
+
+    <record id="action_elks_committee_assignment" model="ir.actions.act_window">
+        <field name="name">Committee Assignments</field>
+        <field name="res_model">elks.committee.assignment</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_is_current': 1}</field>
+    </record>
+</odoo>

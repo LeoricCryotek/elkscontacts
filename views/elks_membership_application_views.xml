@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!--  Membership Application – Form View                          -->
+    <!-- ============================================================ -->
+    <record id="view_elks_membership_application_form" model="ir.ui.view">
+        <field name="name">elks.membership.application.form</field>
+        <field name="model">elks.membership.application</field>
+        <field name="arch" type="xml">
+            <form string="Membership Application">
+                <header>
+                    <!-- Stage workflow buttons -->
+                    <button name="action_start_investigation"
+                            string="Start Investigation" type="object"
+                            class="btn-primary"
+                            invisible="stage != 'proposed'"/>
+                    <button name="action_move_to_balloting"
+                            string="Move to Balloting" type="object"
+                            class="btn-primary"
+                            invisible="stage not in ('proposed', 'investigation')"/>
+                    <button name="action_open_ballot_wizard"
+                            string="Record Ballot" type="object"
+                            class="btn-success"
+                            invisible="stage != 'balloting'"/>
+                    <button name="action_open_initiate_wizard"
+                            string="Initiate Member" type="object"
+                            class="btn-success"
+                            invisible="stage != 'elected'"/>
+                    <button name="action_create_initiation_payment"
+                            string="Create Initiation Payment" type="object"
+                            class="btn-secondary"
+                            invisible="stage != 'initiated'"/>
+                    <button name="action_reject"
+                            string="Reject" type="object"
+                            class="btn-danger"
+                            invisible="stage in ('initiated', 'rejected', 'withdrawn')"/>
+                    <button name="action_withdraw"
+                            string="Withdraw" type="object"
+                            invisible="stage in ('initiated', 'withdrawn')"/>
+                    <button name="action_reset_to_proposed"
+                            string="Reset to Proposed" type="object"
+                            invisible="stage not in ('rejected', 'withdrawn')"/>
+                    <field name="stage" widget="statusbar"
+                           statusbar_visible="proposed,investigation,balloting,elected,initiated"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                        <h2>
+                            <field name="applicant_display_name" readonly="1"/>
+                        </h2>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="application_type" widget="radio"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Proposer">
+                            <field name="proposer_id"/>
+                            <field name="proposer_member_num" readonly="1"/>
+                            <field name="proposer_lodge_num" readonly="1"/>
+                            <field name="endorser_id"/>
+                            <field name="date_proposed"/>
+                            <field name="date_read_onto_floor"/>
+                            <field name="lodge_year" readonly="1"/>
+                        </group>
+                        <group string="Applicant">
+                            <field name="applicant_first_name"/>
+                            <field name="applicant_middle_name"/>
+                            <field name="applicant_last_name"/>
+                            <field name="applicant_suffix"/>
+                            <field name="applicant_sex"/>
+                            <field name="applicant_date_of_birth"/>
+                            <field name="applicant_birth_city"/>
+                            <field name="applicant_birth_country_id"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <field name="applicant_birth_state_id"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                        </group>
+                    </group>
+                    <group invisible="application_type == 'new'"
+                           string="Reinstatement / Affiliation Details">
+                        <group string="Previous Lodge">
+                            <field name="reinstatement_previous_lodge"/>
+                            <field name="reinstatement_previous_state"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <field name="reinstatement_previous_member_num"/>
+                            <field name="reinstatement_previous_secretary"/>
+                        </group>
+                        <group string="Dimit / Release">
+                            <field name="dimit_type"/>
+                            <field name="dimit_date"/>
+                            <field name="reinstatement_reason"
+                                   invisible="application_type != 'reinstatement'"/>
+                            <field name="reinstatement_reason_other"
+                                   invisible="reinstatement_reason != 'other'"/>
+                        </group>
+                        <group string="History">
+                            <field name="reinstatement_last_year_good_standing"/>
+                            <field name="reinstatement_membership_ended"/>
+                        </group>
+                        <group string="Fees">
+                            <field name="reinstatement_fee"
+                                   invisible="application_type != 'reinstatement'"/>
+                            <field name="affiliation_fee"
+                                   invisible="application_type != 'affiliation'"/>
+                            <field name="certificate_of_release_fee"
+                                   invisible="dimit_type != 'certificate_of_release'"/>
+                            <field name="certificate_of_release_fee_paid"
+                                   invisible="dimit_type != 'certificate_of_release'"/>
+                            <field name="prorated_dues"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Contact Info" name="contact_info">
+                            <group>
+                                <group string="Home Address">
+                                    <field name="applicant_street"/>
+                                    <field name="applicant_street2"/>
+                                    <field name="applicant_city"/>
+                                    <field name="applicant_state_id"/>
+                                    <field name="applicant_zip"/>
+                                    <field name="applicant_phone"/>
+                                    <field name="applicant_mobile"/>
+                                    <field name="applicant_email"/>
+                                </group>
+                                <group string="Business Info">
+                                    <field name="applicant_occupation"/>
+                                    <field name="applicant_employer"/>
+                                    <field name="applicant_business_address"/>
+                                    <field name="applicant_business_phone"/>
+                                    <field name="applicant_spouse_name"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Application Questions" name="questions">
+                            <group string="Required Attestations">
+                                <group>
+                                    <field name="q_belief_in_god"/>
+                                    <field name="q_us_citizen"/>
+                                    <field name="q_willing_to_assume_obligation"/>
+                                    <field name="q_no_subversive_affiliation"/>
+                                </group>
+                                <group>
+                                    <field name="q_never_convicted_felony"/>
+                                    <field name="q_bona_fide_resident"/>
+                                    <field name="q_good_character"/>
+                                    <field name="q_authorize_electronic"/>
+                                </group>
+                            </group>
+                            <group string="Previous Membership Proposal">
+                                <group>
+                                    <field name="q_previously_proposed"/>
+                                    <field name="q_previous_lodge"
+                                           invisible="not q_previously_proposed"/>
+                                    <field name="q_previous_lodge_date"
+                                           invisible="not q_previously_proposed"/>
+                                    <field name="q_previous_lodge_result"
+                                           invisible="not q_previously_proposed"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Military Service" name="military">
+                            <group>
+                                <group>
+                                    <field name="applicant_served_military"/>
+                                    <field name="applicant_military_branch"
+                                           invisible="not applicant_served_military"/>
+                                    <field name="applicant_military_discharge_type"
+                                           invisible="not applicant_served_military"/>
+                                    <field name="applicant_military_discharge_other"
+                                           invisible="not applicant_served_military or applicant_military_discharge_type != 'other'"/>
+                                    <field name="applicant_military_discharge_date"
+                                           invisible="not applicant_served_military"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Investigation" name="investigation">
+                            <field name="investigation_committee_member_ids" invisible="True"/>
+                            <group>
+                                <group>
+                                    <field name="investigator_id"/>
+                                    <field name="date_investigation_assigned"/>
+                                    <field name="date_investigation_complete"/>
+                                    <field name="investigation_result"/>
+                                </group>
+                            </group>
+                            <field name="investigation_notes" placeholder="Investigation notes..."/>
+                        </page>
+
+                        <page string="Balloting" name="balloting">
+                            <group>
+                                <group>
+                                    <field name="date_balloting"/>
+                                    <field name="ballot_all_in_favor"/>
+                                    <field name="ballot_result"/>
+                                    <field name="ballot_votes_for"
+                                           invisible="ballot_all_in_favor"/>
+                                    <field name="ballot_votes_against"
+                                           invisible="ballot_all_in_favor"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Initiation" name="initiation">
+                            <group>
+                                <group>
+                                    <field name="date_elected"/>
+                                    <field name="date_initiated"/>
+                                    <field name="member_number_assigned"/>
+                                    <field name="applicant_partner_id"/>
+                                </group>
+                                <group>
+                                    <field name="initiation_fee_paid"/>
+                                    <field name="dues_paid"/>
+                                    <field name="dues_payment_ref" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Notes" name="notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!--  Membership Application – List View                          -->
+    <!-- ============================================================ -->
+    <record id="view_elks_membership_application_list" model="ir.ui.view">
+        <field name="name">elks.membership.application.list</field>
+        <field name="model">elks.membership.application</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="application_type" optional="show"/>
+                <field name="date_proposed"/>
+                <field name="applicant_display_name"/>
+                <field name="proposer_id"/>
+                <field name="stage" widget="badge" decoration-info="stage == 'proposed'"
+                       decoration-warning="stage == 'investigation'"
+                       decoration-primary="stage == 'balloting'"
+                       decoration-success="stage in ('elected', 'initiated')"
+                       decoration-danger="stage in ('rejected', 'withdrawn')"/>
+                <field name="investigator_id" optional="hide"/>
+                <field name="date_balloting" optional="hide"/>
+                <field name="date_initiated" optional="hide"/>
+                <field name="member_number_assigned" optional="hide"/>
+                <field name="lodge_year" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!--  Membership Application – Search View                        -->
+    <!-- ============================================================ -->
+    <record id="view_elks_membership_application_search" model="ir.ui.view">
+        <field name="name">elks.membership.application.search</field>
+        <field name="model">elks.membership.application</field>
+        <field name="arch" type="xml">
+            <search string="Membership Applications">
+                <field name="applicant_display_name"/>
+                <field name="proposer_id"/>
+                <field name="name"/>
+                <field name="member_number_assigned"/>
+                <separator/>
+                <filter string="Proposed" name="filter_proposed"
+                        domain="[('stage', '=', 'proposed')]"/>
+                <filter string="Investigation" name="filter_investigation"
+                        domain="[('stage', '=', 'investigation')]"/>
+                <filter string="Balloting" name="filter_balloting"
+                        domain="[('stage', '=', 'balloting')]"/>
+                <filter string="Elected" name="filter_elected"
+                        domain="[('stage', '=', 'elected')]"/>
+                <filter string="Initiated" name="filter_initiated"
+                        domain="[('stage', '=', 'initiated')]"/>
+                <filter string="Rejected" name="filter_rejected"
+                        domain="[('stage', '=', 'rejected')]"/>
+                <filter string="Withdrawn" name="filter_withdrawn"
+                        domain="[('stage', '=', 'withdrawn')]"/>
+                <separator/>
+                <filter string="Active Pipeline" name="filter_active_pipeline"
+                        domain="[('stage', 'not in', ('initiated', 'rejected', 'withdrawn'))]"/>
+                <separator/>
+                <filter string="New Members" name="filter_new"
+                        domain="[('application_type', '=', 'new')]"/>
+                <filter string="Reinstatements" name="filter_reinstatement"
+                        domain="[('application_type', '=', 'reinstatement')]"/>
+                <filter string="Affiliations" name="filter_affiliation"
+                        domain="[('application_type', '=', 'affiliation')]"/>
+                <separator/>
+                <group>
+                    <filter string="Stage" name="group_stage" context="{'group_by': 'stage'}"/>
+                    <filter string="Type" name="group_type" context="{'group_by': 'application_type'}"/>
+                    <filter string="Proposer" name="group_proposer" context="{'group_by': 'proposer_id'}"/>
+                    <filter string="Lodge Year" name="group_lodge_year" context="{'group_by': 'lodge_year'}"/>
+                    <filter string="Date Proposed" name="group_date" context="{'group_by': 'date_proposed:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!--  Actions                                                     -->
+    <!-- ============================================================ -->
+    <record id="action_elks_membership_application" model="ir.actions.act_window">
+        <field name="name">Membership Applications</field>
+        <field name="res_model">elks.membership.application</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_elks_membership_application_search"/>
+        <field name="context">{'search_default_filter_active_pipeline': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No membership applications yet
+            </p>
+            <p>
+                Click <b>New</b> to start tracking a new proposal for membership.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_elks_membership_proposed" model="ir.actions.act_window">
+        <field name="name">Proposed Members</field>
+        <field name="res_model">elks.membership.application</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_elks_membership_application_search"/>
+        <field name="domain">[('stage', 'in', ('proposed', 'investigation', 'balloting', 'elected'))]</field>
+    </record>
+
+</odoo>

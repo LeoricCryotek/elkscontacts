@@ -2,12 +2,12 @@
   <record id="view_partner_form_elks_row_after_address" model="ir.ui.view">
     <field name="name">res.partner.form.elks.row.after.address</field>
     <field name="model">res.partner</field>
-    <field name="inherit_id" ref="base.view_partner_form"/>
-    <field name="priority" eval="30"/>
+    <field name="inherit_id" ref="elkscontacts.view_partner_form_lodge_records"/>
+    <field name="priority" eval="25"/>
     <field name="arch" type="xml">
 
       <!-- Insert a new label+field row AFTER the entire Address box -->
-      <xpath expr="//div[@class='o_address_format']" position="after">
+      <xpath expr="//div[hasclass('o_address_format')]" position="after">
         <!-- make trigger available -->
         <field name="x_is_not_member" invisible="1"/>
 
@@ -17,13 +17,104 @@
         <!-- Right-side content box -->
         <div class="o_td_field" invisible="x_is_not_member">
           <div class="d-flex flex-wrap gap-2">
-            <field name="x_elks_officer_position" string="Officer Position"/>
+            <field name="x_elks_officer_position" string="Current Officer Position"/>
             <field name="x_elks_officer_type" readonly="1" string="Officer Type"/>
             <field name="x_is_elks_officer" readonly="1" string="Is Officer"/>
           </div>
         </div>
       </xpath>
 
+      <!-- Officer Term History tab on partner form (after Lodge Records) -->
+      <xpath expr="//page[@name='lodge_records']" position="after">
+        <page string="Officer History" name="officer_history" invisible="x_is_not_member">
+          <field name="x_officer_term_ids">
+            <list editable="bottom">
+              <field name="lodge_year"/>
+              <field name="position"/>
+              <field name="officer_type"/>
+              <field name="partial_year"/>
+              <field name="notes"/>
+            </list>
+          </field>
+        </page>
+      </xpath>
+
     </field>
   </record>
+
+  <!-- ============================================================
+       Standalone Officer Term views (for menu access)
+       ============================================================ -->
+
+  <record id="view_elks_officer_term_list" model="ir.ui.view">
+    <field name="name">elks.officer.term.list</field>
+    <field name="model">elks.officer.term</field>
+    <field name="arch" type="xml">
+      <list>
+        <field name="lodge_year"/>
+        <field name="position"/>
+        <field name="partner_id"/>
+        <field name="officer_type"/>
+        <field name="partial_year"/>
+        <field name="notes"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="view_elks_officer_term_form" model="ir.ui.view">
+    <field name="name">elks.officer.term.form</field>
+    <field name="model">elks.officer.term</field>
+    <field name="arch" type="xml">
+      <form>
+        <sheet>
+          <group>
+            <group>
+              <field name="partner_id"/>
+              <field name="position"/>
+              <field name="officer_type"/>
+            </group>
+            <group>
+              <field name="lodge_year"/>
+              <field name="partial_year"/>
+            </group>
+          </group>
+          <group>
+            <field name="notes"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="view_elks_officer_term_search" model="ir.ui.view">
+    <field name="name">elks.officer.term.search</field>
+    <field name="model">elks.officer.term</field>
+    <field name="arch" type="xml">
+      <search>
+        <field name="partner_id"/>
+        <field name="position"/>
+        <field name="lodge_year"/>
+        <separator/>
+        <filter name="group_year" string="Lodge Year" context="{'group_by': 'lodge_year'}"/>
+        <filter name="group_position" string="Position" context="{'group_by': 'position'}"/>
+        <filter name="group_type" string="Officer Type" context="{'group_by': 'officer_type'}"/>
+      </search>
+    </field>
+  </record>
+
+  <!-- Action to open Officer Terms -->
+  <record id="action_elks_officer_terms" model="ir.actions.act_window">
+    <field name="name">Officer Terms</field>
+    <field name="res_model">elks.officer.term</field>
+    <field name="view_mode">list,form</field>
+    <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">
+        No officer terms recorded yet.
+      </p>
+      <p>
+        Track which members hold officer positions each lodge year.
+      </p>
+    </field>
+  </record>
+
 </odoo>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Wizard Form -->
+    <record id="view_elks_volunteer_link_wizard_form" model="ir.ui.view">
+        <field name="name">elks.volunteer.link.wizard.form</field>
+        <field name="model">elks.volunteer.link.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Link Volunteer to Employee">
+                <sheet>
+                    <div class="oe_title">
+                        <h2>Link <field name="partner_id" readonly="1" class="oe_inline"/> to an Employee</h2>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="contact_email" readonly="1"/>
+                            <field name="contact_phone" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="candidate_count" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <div class="alert alert-info" role="alert"
+                         invisible="candidate_count > 0">
+                        <strong>No existing employees match this contact.</strong>
+                        A new employee record will be created when you click
+                        <em>Link or Create</em>.
+                    </div>
+
+                    <div class="alert alert-warning" role="alert"
+                         invisible="candidate_count == 0">
+                        <strong>Possible matches found.</strong> Select an existing
+                        employee below to link, or check <em>Create a New Employee
+                        Record</em> to make a new one anyway.
+                    </div>
+
+                    <separator string="Possible Matches" invisible="candidate_count == 0"/>
+                    <field name="candidate_line_ids" nolabel="1"
+                           invisible="candidate_count == 0">
+                        <list create="false" delete="false" editable="bottom">
+                            <field name="is_selected" widget="boolean_toggle"
+                                   string="Pick"/>
+                            <field name="confidence" widget="badge"
+                                   decoration-success="confidence == 'high'"
+                                   decoration-warning="confidence == 'medium'"
+                                   decoration-muted="confidence == 'low'"
+                                   readonly="1"/>
+                            <field name="employee_id" readonly="1"/>
+                            <field name="employee_email" readonly="1"/>
+                            <field name="employee_department" readonly="1"/>
+                            <field name="employee_active" widget="boolean_toggle"
+                                   readonly="1"/>
+                            <field name="match_reason" readonly="1"/>
+                        </list>
+                    </field>
+
+                    <separator string="Your Choice"/>
+                    <group>
+                        <field name="selected_employee_id"
+                               options="{'no_create': True}"
+                               invisible="create_new"/>
+                        <field name="create_new"/>
+                        <field name="force_relink"
+                               invisible="create_new or not selected_employee_id"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_link_or_create"
+                            type="object" string="Link or Create"
+                            class="btn-primary"/>
+                    <button special="cancel" string="Cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action: open the wizard from the contact form -->
+    <record id="action_elks_volunteer_link_wizard" model="ir.actions.act_window">
+        <field name="name">Link Volunteer to Employee</field>
+        <field name="res_model">elks.volunteer.link.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="base.model_res_partner"/>
+        <field name="binding_view_types">form</field>
+    </record>
+</odoo>

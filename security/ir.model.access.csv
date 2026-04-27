@@ -1,0 +1,15 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_elks_officer_term_user,elks.officer.term.user,elkscontacts.model_elks_officer_term,base.group_user,1,1,1,1
+access_elks_volunteer_training_user,elks.volunteer.training.user,elkscontacts.model_elks_volunteer_training,base.group_user,1,1,1,1
+access_elks_employee_merge_wizard,elks.employee.merge.wizard,elkscontacts.model_elks_employee_merge_wizard,base.group_user,1,1,1,1
+access_elks_volunteer_link_wizard,elks.volunteer.link.wizard,elkscontacts.model_elks_volunteer_link_wizard,base.group_user,1,1,1,1
+access_elks_volunteer_link_wizard_line,elks.volunteer.link.wizard.line,elkscontacts.model_elks_volunteer_link_wizard_line,base.group_user,1,1,1,1
+access_elks_committee,elks.committee,elkscontacts.model_elks_committee,base.group_user,1,1,1,1
+access_elks_committee_assignment,elks.committee.assignment,elkscontacts.model_elks_committee_assignment,base.group_user,1,1,1,1
+access_elks_charitable_activity,elks.charitable.activity,elkscontacts.model_elks_charitable_activity,base.group_user,1,1,1,1
+access_elks_membership_application,elks.membership.application,elkscontacts.model_elks_membership_application,base.group_user,1,1,1,1
+access_elks_volunteer_signup_wizard,elks.volunteer.signup.wizard,elkscontacts.model_elks_volunteer_signup_wizard,base.group_user,1,1,1,1
+access_elks_volunteer_signup_wizard_match,elks.volunteer.signup.wizard.match,elkscontacts.model_elks_volunteer_signup_wizard_match,base.group_user,1,1,1,1
+access_clms_import_wizard,clms.import.wizard,elkscontacts.model_clms_import_wizard,base.group_user,1,1,1,1
+access_elks_ballot_wizard,elks.ballot.wizard,elkscontacts.model_elks_ballot_wizard,base.group_user,1,1,1,1
+access_elks_initiate_wizard,elks.initiate.wizard,elkscontacts.model_elks_initiate_wizard,base.group_user,1,1,1,1

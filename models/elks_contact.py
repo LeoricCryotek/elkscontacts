@@ -2,18 +2,64 @@
 # Copyright (C) 2025
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0.en.html)
 
+from datetime import date
+
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
 
+import logging
+
+_logger = logging.getLogger(__name__)
+
 
 class ResPartner(models.Model):
+    """Extend res.partner with Elks Lodge membership fields.
+
+    Adds lodge membership data (member number, dues, officer positions),
+    CLMS import/export fields, volunteer ↔ HR employee sync, and
+    lodge-specific local fields (keys, door codes, etc.).
+    """
     _inherit = "res.partner"
+
+    # ----------------------------
+    # Contact type tags (multi-select)
+    # ----------------------------
+    x_is_volunteer = fields.Boolean("Volunteer", index=True)
+    x_is_customer = fields.Boolean("Customer", index=True)
+    x_is_guest = fields.Boolean("Guest", index=True)
+    x_is_initiate = fields.Boolean(
+        "Initiate", index=True,
+        help="Applicant who has been proposed for membership but not yet "
+             "initiated. Cleared automatically when the member is initiated.",
+    )
+
+    # Link to the HR employee record created for volunteers
+    x_volunteer_employee_id = fields.Many2one(
+        'hr.employee', string='Volunteer Employee Record',
+        ondelete='set null', copy=False,
+        help='Automatically created HR employee record when marked as a volunteer.',
+    )
 
     # ----------------------------
     # Local (chapter-specific) data
     # ----------------------------
     x_local_door_code = fields.Char("Door Code", help="Local building or door access code.")
     x_local_has_key = fields.Boolean("Has Key")
+    x_local_key_numbers = fields.Char(
+        "Key Number(s)",
+        help="Key number(s) issued to this person, e.g. '101, 102'.",
+    )
+    x_local_card_delivery = fields.Selection([
+        ('not_delivered', 'Not Delivered'),
+        ('hand', 'Delivered by Hand'),
+        ('mailed', 'Mailed'),
+    ], string="Membership Card", default='not_delivered',
+        help="How the membership card was delivered to this member.",
+    )
+    x_local_card_delivery_date = fields.Date(
+        "Card Delivery Date",
+        help="Date the membership card was delivered or mailed.",
+    )
     x_local_volunteer_active = fields.Boolean("Volunteer Active")
     x_local_bartender = fields.Boolean("Bartender")
     x_local_kitchen = fields.Boolean("Kitchen")
@@ -23,6 +69,13 @@ class ResPartner(models.Model):
     # Membership / Lodge
     # ----------------------------
     x_is_not_member = fields.Boolean("Is not an Elks Member", index=True)
+    x_is_member = fields.Boolean(
+        "Is Elks Member",
+        compute='_compute_x_is_member',
+        inverse='_inverse_x_is_member',
+        store=True,
+        index=True,
+    )
     x_detail_id = fields.Char("DetailID", index=True)
     x_detail_lodge_id = fields.Char("DetailLodgeID")
     x_detail_lodge_num = fields.Char("DetailLodgeNum")
@@ -111,9 +164,37 @@ class ResPartner(models.Model):
     # ----------------------------
     x_last_life_date = fields.Date("LastLifeDate")
     x_last_hon_life_date = fields.Date("LastHonLifeDate")
-    x_detail_pey_start_year = fields.Integer("DetailPEYStartYear")
-    x_detail_per_start_year = fields.Integer("DetailPERStartYear")
-    x_detail_poy_start_year = fields.Integer("DetailPOYStartYear")
+    x_detail_pey_start_year = fields.Char(
+        "PEY Start Year", size=4,
+        help="Year this member first received PEY (PER of the Year) recognition.",
+    )
+    x_detail_per_start_year = fields.Char(
+        "PER Start Year", size=4,
+        help="Year this member first became a Past Exalted Ruler.",
+    )
+    x_detail_poy_start_year = fields.Char(
+        "POY Start Year", size=4,
+        help="Year this member first received POY (Officer of the Year) recognition.",
+    )
+
+    # Computed years of service for PER / PEY / POY
+    # NOT stored — avoids DB column creation issues during upgrade
+    # and these are trivial subtractions, no performance concern.
+    x_years_as_per = fields.Integer(
+        "Years as PER",
+        compute="_compute_honor_years",
+        help="Number of years since becoming a Past Exalted Ruler.",
+    )
+    x_years_as_pey = fields.Integer(
+        "Years as PEY",
+        compute="_compute_honor_years",
+        help="Number of years since receiving PEY recognition.",
+    )
+    x_years_as_poy = fields.Integer(
+        "Years as POY",
+        compute="_compute_honor_years",
+        help="Number of years since receiving POY recognition.",
+    )
 
     # ----------------------------
     # Misc
@@ -127,7 +208,33 @@ class ResPartner(models.Model):
     x_original_index = fields.Char("OriginalIndex")
 
     # ----------------------------
-    # Officers
+    # Officer Term History
+    # ----------------------------
+    x_officer_term_ids = fields.One2many(
+        'elks.officer.term', 'partner_id',
+        string='Officer Term History',
+    )
+
+    # ----------------------------
+    # Membership Application History
+    # ----------------------------
+    x_membership_application_ids = fields.One2many(
+        'elks.membership.application', 'applicant_partner_id',
+        string='Membership Applications',
+    )
+
+    # ----------------------------
+    # Committee Assignment History
+    # ----------------------------
+    x_committee_assignment_ids = fields.One2many(
+        'elks.committee.assignment', 'partner_id',
+        string='Committee Assignments',
+    )
+
+    # Dues Payment History is added by the elksfrs module if installed.
+
+    # ----------------------------
+    # Officers (current)
     # ----------------------------
     x_elks_officer_position = fields.Selection([
         ('exalted_ruler', 'Exalted Ruler'),
@@ -155,19 +262,75 @@ class ResPartner(models.Model):
         string='Is Elks Officer', compute='_compute_x_is_elks_officer', store=True
     )
 
-    # DB-level guarantees
-    _sql_constraints = [
-        ('unique_elks_officer_position',
-         'unique(x_elks_officer_position)',
-         'There can be only one holder for each Elks officer position.'),
-        ('res_partner_uniq_member_num',
-         'unique(x_detail_member_num)',
-         'Another contact already has this Elks Member Number.'),
-    ]
+    @api.constrains('x_detail_member_num')
+    def _check_unique_member_num(self):
+        for rec in self:
+            if not rec.x_detail_member_num:
+                continue
+            dupes = self.with_context(active_test=False).search([
+                ('x_detail_member_num', '=', rec.x_detail_member_num),
+                ('id', '!=', rec.id),
+            ])
+            if dupes:
+                raise ValidationError(_(
+                    "Another contact (%(other)s) already has Elks "
+                    "Member Number %(num)s."
+                ) % {
+                    'other': dupes[0].name,
+                    'num': rec.x_detail_member_num,
+                })
+
+    # ==========================================
+    # Onchange: Elk / Guest mutual exclusion
+    # ==========================================
+    @api.onchange('x_is_member')
+    def _onchange_x_is_member(self):
+        if self.x_is_member and self.x_is_guest:
+            self.x_is_guest = False
+
+    @api.onchange('x_is_guest')
+    def _onchange_x_is_guest(self):
+        if self.x_is_guest and self.x_is_member:
+            self.x_is_member = False
+
+    @api.constrains('x_is_member', 'x_is_guest')
+    def _check_member_guest_exclusive(self):
+        for rec in self:
+            if rec.x_is_member and rec.x_is_guest:
+                raise ValidationError(
+                    _('A contact cannot be both an Elk member and a Guest. '
+                      'Please uncheck one before saving.')
+                )
 
     # ==========================================
     # Helpers
     # ==========================================
+    def _extract_pin_from_phone(self):
+        """Extract the last 4 digits from the contact's phone for use as a PIN.
+
+        Tries mobile first (native ``mobile`` field or cell parts from CLMS),
+        then falls back to home phone.  Returns a 4-digit string or False if
+        no phone has enough digits.
+        """
+        import re
+        for source in [
+            getattr(self, 'mobile', None),
+            self._compose_phone(
+                self.x_detail_cell_area_code, self.x_detail_cell_phone,
+            ) if self.x_detail_cell_phone else None,
+            self.phone,
+            self._compose_phone(
+                self.x_detail_home_area_code, self.x_detail_home_phone,
+                self.x_detail_home_phone_ext,
+            ) if self.x_detail_home_phone else None,
+        ]:
+            if not source:
+                continue
+            digits = re.sub(r'\D', '', source)
+            if len(digits) >= 4:
+                return digits[-4:]
+        return False
+
     def _prepare_person_defaults(self, vals):
         """Force individual (person) flags for import/create/write."""
         vals = dict(vals)
@@ -226,7 +389,13 @@ class ResPartner(models.Model):
     def _find_title(self, val):
         if not val:
             return False
+        # Guard: res.partner.title may not exist if contacts module
+        # is not installed, and title field may not be on res.partner
+        if "res.partner.title" not in self.env or "title" not in self._fields:
+            return False
         name = val.strip()
+        if not name:
+            return False
         Title = self.env["res.partner.title"]
         title = Title.search([("name", "=ilike", name)], limit=1)
         if title:
@@ -242,6 +411,15 @@ class ResPartner(models.Model):
     # ==========================================
     # Compute / Constraints
     # ==========================================
+    @api.depends('x_is_not_member')
+    def _compute_x_is_member(self):
+        for rec in self:
+            rec.x_is_member = not rec.x_is_not_member
+
+    def _inverse_x_is_member(self):
+        for rec in self:
+            rec.x_is_not_member = not rec.x_is_member
+
     @api.depends('x_elks_officer_position')
     def _compute_x_elks_officer_type(self):
         elected = {
@@ -255,6 +433,23 @@ class ResPartner(models.Model):
                 rec.x_elks_officer_type = 'appointed'
             else:
                 rec.x_elks_officer_type = False
+
+    @api.depends('x_detail_per_start_year', 'x_detail_pey_start_year',
+                 'x_detail_poy_start_year')
+    def _compute_honor_years(self):
+        current_year = date.today().year
+        for rec in self:
+            for yr_field, count_field in [
+                ('x_detail_per_start_year', 'x_years_as_per'),
+                ('x_detail_pey_start_year', 'x_years_as_pey'),
+                ('x_detail_poy_start_year', 'x_years_as_poy'),
+            ]:
+                raw = getattr(rec, yr_field) or ''
+                try:
+                    start = int(raw.strip())
+                    setattr(rec, count_field, max(0, current_year - start))
+                except (ValueError, AttributeError):
+                    setattr(rec, count_field, 0)
 
     @api.depends('x_elks_officer_position')
     def _compute_x_is_elks_officer(self):
@@ -277,6 +472,129 @@ class ResPartner(models.Model):
                 raise ValidationError(_(
                     "Only one member can be '%s'. Current holder: %s"
                 ) % (label, other.display_name))
+
+    # ==========================================
+    # Volunteer ↔ HR Employee sync
+    # ==========================================
+    def _get_or_create_volunteer_department(self):
+        """Return the 'Volunteers' HR department, creating it if needed."""
+        Department = self.env['hr.department'].sudo()
+        dept = Department.search([('name', '=', 'Volunteers')], limit=1)
+        if not dept:
+            dept = Department.create({'name': 'Volunteers'})
+        return dept
+
+    def _sync_volunteer_employee(self):
+        """Sync HR employee records based on x_is_volunteer.
+
+        New behavior:
+          * If already linked via ``x_volunteer_employee_id`` → re-activate / update.
+          * Otherwise search for a HIGH-confidence match (email exact, or
+            already linked via ``work_contact_id``) and silently auto-link if
+            found.
+          * If no high-confidence match → DO NOT create a new employee.
+            Instead post a chatter note prompting the user to run the
+            "Link / Create Employee" wizard.  This prevents duplicate employee
+            records from being created blindly.
+          * When volunteer is unchecked → archive the linked employee.
+        """
+        Employee = self.env['hr.employee'].sudo()
+
+        def _norm_email(s):
+            return (s or '').strip().lower()
+
+        for rec in self:
+            if rec.x_is_volunteer:
+                if rec.x_volunteer_employee_id:
+                    # Re-activate if it was previously archived
+                    if not rec.x_volunteer_employee_id.active:
+                        rec.x_volunteer_employee_id.write({
+                            'active': True,
+                            'x_is_volunteer': True,
+                        })
+                    continue
+
+                # 1. Try the existing work_contact_id link
+                existing = Employee.with_context(active_test=False).search([
+                    ('work_contact_id', '=', rec.id),
+                ], limit=1)
+
+                # 2. Try an exact email match
+                if not existing and rec.email:
+                    candidates = Employee.with_context(active_test=False).search([
+                        '|',
+                        ('work_email', '=ilike', _norm_email(rec.email)),
+                        ('private_email', '=ilike', _norm_email(rec.email)),
+                    ])
+                    if len(candidates) == 1:
+                        existing = candidates
+
+                if existing:
+                    dept = rec._get_or_create_volunteer_department()
+                    existing.write({
+                        'active': True,
+                        'department_id': dept.id,
+                        'x_is_volunteer': True,
+                        'work_contact_id': rec.id,
+                    })
+                    rec.write({'x_volunteer_employee_id': existing.id})
+                    rec.message_post(
+                        body=(
+                            f"<strong>Auto-linked to existing employee</strong><br/>"
+                            f"Employee: {existing.name} (ID {existing.id})"
+                        ),
+                        message_type='comment', subtype_xmlid='mail.mt_note',
+                    )
+                    _logger.info(
+                        'Auto-linked partner %s to existing employee %s',
+                        rec.id, existing.id,
+                    )
+                else:
+                    # No safe auto-match — prompt the user to use the wizard
+                    rec.message_post(
+                        body=(
+                            "<strong>Volunteer flag set — employee record not created.</strong><br/>"
+                            "No unambiguous match was found.  Click "
+                            "<em>Link / Create Employee</em> on the contact form to "
+                            "pick an existing employee or create a new one."
+                        ),
+                        message_type='comment', subtype_xmlid='mail.mt_note',
+                    )
+                    _logger.info(
+                        'No safe employee match for volunteer partner %s '
+                        '— awaiting wizard link',
+                        rec.id,
+                    )
+            else:
+                # Archive the employee record when volunteer is unchecked
+                if rec.x_volunteer_employee_id and rec.x_volunteer_employee_id.active:
+                    rec.x_volunteer_employee_id.write({'active': False})
+                    rec.message_post(
+                        body=(
+                            f"<strong>Volunteer flag removed</strong><br/>"
+                            f"Employee record {rec.x_volunteer_employee_id.name} "
+                            f"(ID {rec.x_volunteer_employee_id.id}) archived."
+                        ),
+                        message_type='comment', subtype_xmlid='mail.mt_note',
+                    )
+                    _logger.info(
+                        'Archived volunteer employee record %s for partner %s',
+                        rec.x_volunteer_employee_id.id, rec.id,
+                    )
+
+    def action_open_volunteer_link_wizard(self):
+        """Open the Link / Create Employee wizard for this contact."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Link Volunteer to Employee'),
+            'res_model': 'elks.volunteer.link.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_partner_id': self.id,
+            },
+        }
 
     # ==========================================
     # Create / Write
@@ -307,8 +625,11 @@ class ResPartner(models.Model):
         for vals in vals_list:
             vals = dict(vals)  # copy per row
 
-            # Force person flags
+            # Force person flags and customer defaults
             vals = self._prepare_person_defaults(vals)
+            # Default all new contacts as customers
+            vals.setdefault('customer_rank', 1)
+            vals.setdefault('x_is_customer', True)
 
             # Ensure 'name'
             if not (vals.get("name") and str(vals.get("name")).strip()):
@@ -352,6 +673,11 @@ class ResPartner(models.Model):
             overwrite = bool(self.env.context.get("elks_overwrite", True))
             touched.action_update_elk_members(overwrite=overwrite, only_with_elks=False)
 
+        # Sync volunteer → employee for any records flagged as volunteer
+        volunteers = touched.filtered('x_is_volunteer')
+        if volunteers:
+            volunteers._sync_volunteer_employee()
+
         return touched
 
     def write(self, vals):
@@ -373,6 +699,11 @@ class ResPartner(models.Model):
                     composed = rec._elks_compose_name()
                     if composed:
                         super(ResPartner, rec).write({"name": composed})
+
+        # Sync volunteer → employee when the volunteer flag changes
+        if 'x_is_volunteer' in vals:
+            self._sync_volunteer_employee()
+
         return res
 
     # ==========================================
@@ -392,10 +723,11 @@ class ResPartner(models.Model):
             if name_combined and name_combined != (rec.name or ""):
                 vals["name"] = name_combined
 
-            # Title from salutation
-            title = rec._find_title(rec.x_detail_name_salutation)
-            if title and rec.title != title:
-                vals["title"] = title.id
+            # Title from salutation (only if title field exists)
+            if "title" in rec._fields:
+                title = rec._find_title(rec.x_detail_name_salutation)
+                if title and rec.title != title:
+                    vals["title"] = title.id
 
             # Email
             x_email = (rec.x_detail_email_address or "").strip()

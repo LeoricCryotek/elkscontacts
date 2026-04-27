@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_elks_initiate_wizard_form" model="ir.ui.view">
+        <field name="name">elks.initiate.wizard.form</field>
+        <field name="model">elks.initiate.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Initiate New Member">
+                <div class="alert alert-info" role="alert">
+                    <strong>Initiation Checklist</strong><br/>
+                    Complete the fields below. On confirmation, the applicant
+                    will be created (or updated) as a full member contact with
+                    dues set through the end of the current lodge year.
+                    A CLMS to-do will be scheduled for the Secretary.
+                </div>
+                <group>
+                    <field name="application_id" invisible="True"/>
+                    <field name="applicant_name" string="Applicant"/>
+                    <field name="applicant_partner_id"/>
+                    <field name="initiation_date"/>
+                    <field name="member_number"/>
+                    <field name="initiation_fee_paid"/>
+                    <field name="dues_paid"/>
+                </group>
+                <footer>
+                    <button name="action_confirm" type="object"
+                            string="Initiate Member" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

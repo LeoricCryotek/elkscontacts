@@ -1,12 +1,121 @@
 <odoo>
-    <!-- CLMS tab on res.partner -->
+    <!-- Contact type toggles at top of contact form -->
+    <record id="view_partner_form_elks_member_flag" model="ir.ui.view">
+        <field name="name">res.partner.form.elks.member.flag</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="priority" eval="10"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='company_type']" position="after">
+                <div class="d-flex gap-4 mt-2 mb-2 align-items-center">
+                    <div class="d-flex align-items-center gap-1">
+                        <label for="x_is_member" string="Elk"/>
+                        <field name="x_is_member" widget="boolean_toggle"/>
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                        <label for="x_is_volunteer" string="Volunteer"/>
+                        <field name="x_is_volunteer" widget="boolean_toggle"/>
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                        <label for="x_is_customer" string="Customer"/>
+                        <field name="x_is_customer" widget="boolean_toggle"/>
+                    </div>
+                    <div class="d-flex align-items-center gap-1"
+                         invisible="not x_is_member">
+                        <label for="x_is_initiate" string="Initiate"/>
+                        <field name="x_is_initiate" widget="boolean_toggle"/>
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                        <label for="x_is_guest" string="Guest"/>
+                        <field name="x_is_guest" widget="boolean_toggle"/>
+                    </div>
+                </div>
+                <field name="x_volunteer_employee_id" invisible="1"/>
+                <div class="d-flex gap-2 align-items-center"
+                     invisible="not x_is_volunteer">
+                    <button name="action_open_volunteer_link_wizard"
+                            string="Link / Create Employee"
+                            type="object"
+                            class="btn-primary btn-sm"
+                            icon="fa-link"
+                            invisible="x_volunteer_employee_id"
+                            help="Open the wizard to pick an existing employee to link, or create a new one"/>
+                    <span class="text-muted small"
+                          invisible="x_volunteer_employee_id">
+                        No employee linked yet.
+                    </span>
+                    <span class="text-success small"
+                          invisible="not x_volunteer_employee_id">
+                        <i class="fa fa-check-circle" title="Linked"/> Linked to employee.
+                    </span>
+                    <button name="%(elkscontacts.action_elks_employee_merge_wizard_from_contact)d"
+                            string="Merge Duplicates"
+                            type="action"
+                            class="btn-link btn-sm"
+                            icon="fa-compress"
+                            help="Merge duplicate HR employee records for this contact"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Return to Sender banner + button on contact form -->
+    <record id="view_partner_form_elks_rts" model="ir.ui.view">
+        <field name="name">res.partner.form.elks.rts</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="priority" eval="11"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <field name="x_return_to_sender" invisible="1"/>
+                <!-- Alert banner when RTS is flagged -->
+                <div class="alert alert-warning mb-3"
+                     role="alert"
+                     invisible="not x_return_to_sender">
+                    <i class="fa fa-exclamation-triangle" title="Warning"/>
+                    <strong> Return to Sender</strong> —
+                    Mail returned as undeliverable
+                    <span invisible="not x_return_to_sender_date">
+                        on <field name="x_return_to_sender_date" readonly="1" class="d-inline"/>
+                    </span>.
+                    Please verify and update the mailing address.
+                    <button name="action_clear_return_to_sender"
+                            type="object"
+                            string="Clear RTS Flag"
+                            class="btn-sm btn-warning ms-3"
+                            icon="fa-check"/>
+                </div>
+            </xpath>
+            <!-- Mark RTS button in the form header area -->
+            <xpath expr="//form/sheet/div[hasclass('oe_button_box')]" position="inside">
+                <button name="action_mark_return_to_sender"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-envelope-o"
+                        invisible="x_return_to_sender">
+                    <span>Mark RTS</span>
+                </button>
+                <button name="action_clear_return_to_sender"
+                        type="object"
+                        class="oe_stat_button text-warning"
+                        icon="fa-exclamation-triangle"
+                        invisible="not x_return_to_sender">
+                    <span>RTS Flagged</span>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- CLMS tab on res.partner (visible only for members) -->
     <record id="view_partner_form_elks" model="ir.ui.view">
         <field name="name">res.partner.form.elks</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//form/sheet/notebook" position="inside">
-                <page string="CLMS">
+            <!-- CLMS tab first: insert before the built-in Contacts page -->
+            <xpath expr="//form/sheet/notebook/page[@name='contact_addresses']" position="before">
+                <page string="CLMS" invisible="not x_is_member"
+                      name="clms_tab" autofocus="autofocus">
                     <group>
                         <group string="Membership">
                             <field name="x_detail_id" string="Record ID"/>
@@ -77,9 +186,12 @@
                         <group string="Dates / Years">
                             <field name="x_last_life_date" string="Last Life Date"/>
                             <field name="x_last_hon_life_date" string="Last Honor Life Date"/>
-                            <field name="x_detail_pey_start_year" string="PEY Start Year"/>
                             <field name="x_detail_per_start_year" string="PER Start Year"/>
+                            <field name="x_years_as_per" string="Years as PER"/>
+                            <field name="x_detail_pey_start_year" string="PEY Start Year"/>
+                            <field name="x_years_as_pey" string="Years as PEY"/>
                             <field name="x_detail_poy_start_year" string="POY Start Year"/>
+                            <field name="x_years_as_poy" string="Years as POY"/>
                         </group>
                         <group string="Other">
                             <field name="x_branch_of_service" string="Branch of Service"/>
@@ -98,6 +210,66 @@
                             <field name="x_detail_user_value_009" string="User Value 009"/>
                         </group>
                     </group>
+                </page>
+
+                <page string="Elks History" name="elks_history"
+                      invisible="not x_is_member and not x_is_initiate">
+
+                    <!-- Titles &amp; Honors -->
+                    <group string="Current Title &amp; Honors">
+                        <group>
+                            <field name="x_elks_officer_position" string="Current Officer Position"/>
+                            <field name="x_elks_officer_type" string="Officer Type"/>
+                            <field name="x_detail_elk_title" string="Elks Title"/>
+                        </group>
+                        <group>
+                            <field name="x_detail_per_start_year" string="PER Since"/>
+                            <field name="x_years_as_per" string="Years as PER"/>
+                            <field name="x_detail_pey_start_year" string="PEY Since"/>
+                            <field name="x_years_as_pey" string="Years as PEY"/>
+                            <field name="x_detail_poy_start_year" string="POY Since"/>
+                            <field name="x_years_as_poy" string="Years as POY"/>
+                            <field name="x_last_life_date" string="Life Member Date"/>
+                            <field name="x_last_hon_life_date" string="Honorary Life Date"/>
+                        </group>
+                    </group>
+
+                    <separator string="Officer Term History"/>
+                    <field name="x_officer_term_ids" readonly="1">
+                        <list>
+                            <field name="lodge_year"/>
+                            <field name="position"/>
+                            <field name="officer_type"/>
+                            <field name="partial_year"/>
+                            <field name="notes"/>
+                        </list>
+                    </field>
+
+                    <separator string="Committee Assignments"/>
+                    <field name="x_committee_assignment_ids" readonly="1">
+                        <list>
+                            <field name="lodge_year"/>
+                            <field name="committee_id"/>
+                            <field name="role"/>
+                            <field name="date_appointed"/>
+                            <field name="date_ended"/>
+                            <field name="is_current"/>
+                            <field name="notes"/>
+                        </list>
+                    </field>
+
+                    <separator string="Membership Application History"/>
+                    <field name="x_membership_application_ids" readonly="1">
+                        <list>
+                            <field name="name" string="Reference"/>
+                            <field name="stage"/>
+                            <field name="date_proposed"/>
+                            <field name="proposer_id" string="Proposed By"/>
+                            <field name="ballot_result"/>
+                            <field name="date_elected"/>
+                            <field name="date_initiated"/>
+                        </list>
+                    </field>
                 </page>
             </xpath>
         </field>

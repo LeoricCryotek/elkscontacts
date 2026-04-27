@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_clms_import_wizard_form" model="ir.ui.view">
+        <field name="name">clms.import.wizard.form</field>
+        <field name="model">clms.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import from CLMS">
+                <group invisible="state != 'setup'">
+                    <div class="alert alert-info" role="alert">
+                        <strong>Import CLMS Member Directory</strong><br/>
+                        Upload the "All Active Members" CSV export from CLMS.
+                        Existing members will be matched by Member Number and
+                        updated.  New members will be created automatically.
+                    </div>
+                    <field name="file_data" filename="file_name"/>
+                    <field name="file_name" invisible="True"/>
+                    <field name="overwrite"/>
+                </group>
+                <div invisible="state != 'done'">
+                    <h3>
+                        <i class="fa fa-check-circle text-success"/> Import Results
+                    </h3>
+                    <field name="result_message" readonly="True"
+                           widget="text" nolabel="1"
+                           class="o_field_text_mono"
+                           style="white-space: pre-wrap; font-family: monospace;
+                                  font-size: 13px; min-height: 200px;
+                                  width: 100%; padding: 12px;
+                                  background: #f8f9fa; border-radius: 4px;"/>
+                </div>
+                <field name="state" invisible="True"/>
+                <footer invisible="state != 'setup'">
+                    <button name="action_import" type="object"
+                            string="Import" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+                <footer invisible="state != 'done'">
+                    <button string="Close" class="btn-primary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_clms_import_wizard" model="ir.actions.act_window">
+        <field name="name">Import from CLMS</field>
+        <field name="res_model">clms.import.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

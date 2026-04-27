@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===== Merge Wizard Form ===== -->
+    <record id="view_elks_employee_merge_wizard_form" model="ir.ui.view">
+        <field name="name">elks.employee.merge.wizard.form</field>
+        <field name="model">elks.employee.merge.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Merge Duplicate Employees">
+                <group>
+                    <field name="partner_id"
+                           options="{'no_create': True}"
+                           placeholder="Select a contact with duplicate employees..."/>
+                    <field name="duplicate_count" readonly="1"/>
+                </group>
+
+                <group invisible="duplicate_count &lt; 2">
+                    <group string="Employees Found">
+                        <field name="duplicate_employee_ids" nolabel="1"
+                               readonly="1" widget="many2many_tags"/>
+                    </group>
+                    <group string="Merge Settings">
+                        <field name="keep_employee_id"
+                               options="{'no_create': True}"
+                               help="All training, skills, and resume data will be moved here."/>
+                        <field name="archive_duplicates"/>
+                    </group>
+                </group>
+
+                <div invisible="duplicate_count &gt;= 2"
+                     class="alert alert-info" role="alert">
+                    <strong>No duplicates found.</strong>
+                    This contact has fewer than 2 employee records — nothing to merge.
+                </div>
+
+                <footer invisible="duplicate_count &lt; 2">
+                    <button name="action_merge" string="Merge Employees"
+                            type="object" class="btn-primary"
+                            confirm="This will consolidate all training, skills, and resume data into the selected employee and archive the duplicates.  Continue?"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+                <footer invisible="duplicate_count &gt;= 2">
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ===== Wizard Action (from menu) ===== -->
+    <record id="action_elks_employee_merge_wizard" model="ir.actions.act_window">
+        <field name="name">Merge Duplicate Employees</field>
+        <field name="res_model">elks.employee.merge.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- ===== Wizard Action (from contact form button — pre-fills partner) ===== -->
+    <record id="action_elks_employee_merge_wizard_from_contact" model="ir.actions.act_window">
+        <field name="name">Merge Duplicate Employees</field>
+        <field name="res_model">elks.employee.merge.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_partner_id': active_id}</field>
+    </record>
+</odoo>
