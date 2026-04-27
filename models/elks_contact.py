@@ -596,6 +596,20 @@ class ResPartner(models.Model):
             },
         }
 
+    def action_open_employee_merge_wizard(self):
+        """Open the Merge Duplicate Employees wizard for this contact."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Merge Duplicate Employees'),
+            'res_model': 'elks.employee.merge.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_partner_id': self.id,
+            },
+        }
+
     # ==========================================
     # Create / Write
     # ==========================================

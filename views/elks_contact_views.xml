@@ -48,9 +48,9 @@
                           invisible="not x_volunteer_employee_id">
                         <i class="fa fa-check-circle" title="Linked"/> Linked to employee.
                     </span>
-                    <button name="%(elkscontacts.action_elks_employee_merge_wizard_from_contact)d"
+                    <button name="action_open_employee_merge_wizard"
                             string="Merge Duplicates"
-                            type="action"
+                            type="object"
                             class="btn-link btn-sm"
                             icon="fa-compress"
                             help="Merge duplicate HR employee records for this contact"/>
