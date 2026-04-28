@@ -1,6 +1,6 @@
 {
     "name": "Elks Contacts",
-    "version": "19.0.3.6",
+    "version": "19.0.3.7",
     "category": "Contacts",
     "summary": "Manage Elks Member Contact Information",
     "author": "Danny Santiago",

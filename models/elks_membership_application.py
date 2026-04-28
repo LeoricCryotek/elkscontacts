@@ -1221,6 +1221,12 @@ class ElksMembershipApplication(models.Model):
             rec._schedule_clms_activity('initiated')
             rec._log_member_history('initiated', rec.date_initiated)
 
+            # Auto-create pro-rated dues payment (elksfrs soft dependency)
+            if 'elks.dues.payment' in self.env:
+                self.env['elks.dues.payment'].create_prorated_initiation_payment(
+                    partner, application=rec,
+                )
+
     def action_create_initiation_payment(self):
         """Open a new dues payment pre-filled for initiation fees.
 
@@ -1348,6 +1354,12 @@ class ElksMembershipApplication(models.Model):
 
             rec._schedule_clms_activity('initiated')
             rec._log_member_history('reinstatement', reinstatement_date)
+
+            # Auto-create pro-rated dues payment (elksfrs soft dependency)
+            if 'elks.dues.payment' in self.env:
+                self.env['elks.dues.payment'].create_prorated_initiation_payment(
+                    partner, application=rec,
+                )
 
             _logger.info(
                 'Application %s: reinstated %s (partner %s)',
