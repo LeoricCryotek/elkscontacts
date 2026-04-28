@@ -232,3 +232,46 @@ class ElksOfficerTerm(models.Model):
                     'pos': label,
                     'yr': rec.lodge_year,
                 })
+
+    # ── Sync current officer position to contact ────────────
+    def _sync_officer_position_to_partner(self):
+        """Update x_elks_officer_position on the partner based on the
+        most recent officer term for the current lodge year.  If the
+        partner has no term for the current year, clear the position."""
+        current_year = _default_lodge_year(self)
+        partners = self.mapped('partner_id')
+        for partner in partners:
+            term = self.search([
+                ('partner_id', '=', partner.id),
+                ('lodge_year', '=', current_year),
+            ], order='id desc', limit=1)
+            new_pos = term.position if term else False
+            if partner.x_elks_officer_position != new_pos:
+                partner.write({'x_elks_officer_position': new_pos})
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._sync_officer_position_to_partner()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        if 'position' in vals or 'partner_id' in vals or 'lodge_year' in vals:
+            self._sync_officer_position_to_partner()
+        return res
+
+    def unlink(self):
+        partners = self.mapped('partner_id')
+        res = super().unlink()
+        # After deletion, re-check these partners
+        current_year = _default_lodge_year(self)
+        for partner in partners:
+            term = self.search([
+                ('partner_id', '=', partner.id),
+                ('lodge_year', '=', current_year),
+            ], order='id desc', limit=1)
+            new_pos = term.position if term else False
+            if partner.x_elks_officer_position != new_pos:
+                partner.write({'x_elks_officer_position': new_pos})
+        return res

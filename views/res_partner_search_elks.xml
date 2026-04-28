@@ -43,6 +43,11 @@
                             string="Guests"
                             domain="[('x_is_guest','=',True)]"/>
 
+                    <filter name="filter_dropped"
+                            string="Dropped Members"
+                            domain="[('active', '=', False)]"
+                            help="Members who have been dropped (archived)."/>
+
                     <separator string="Mail"/>
 
                     <filter name="filter_return_to_sender"

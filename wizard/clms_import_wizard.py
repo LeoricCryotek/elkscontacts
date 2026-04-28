@@ -103,6 +103,29 @@ BOOL_FIELDS = {
     'x_enotices_ok',
 }
 
+# Phone field pairs: (area_code_field, phone_field) for formatting
+PHONE_PAIRS = [
+    ('x_detail_home_area_code', 'x_detail_home_phone'),
+    ('x_detail_cell_area_code', 'x_detail_cell_phone'),
+    ('x_detail_work_area_code', 'x_detail_work_phone'),
+    ('x_detail_fax_area_code', 'x_detail_fax_phone'),
+]
+
+
+def _format_phone_digits(digits):
+    """Format a string of digits into US phone format.
+
+    '2085569898' → '(208) 556-9898'
+    '5569898'   → '556-9898'
+    """
+    import re
+    d = re.sub(r'\D', '', digits or '')
+    if len(d) == 10:
+        return f"({d[:3]}) {d[3:6]}-{d[6:]}"
+    if len(d) == 7:
+        return f"{d[:3]}-{d[3:]}"
+    return digits  # return as-is if non-standard length
+
 
 class ClmsImportWizard(models.TransientModel):
     _name = "clms.import.wizard"
@@ -211,6 +234,15 @@ class ClmsImportWizard(models.TransientModel):
                 if not member_num:
                     skipped += 1
                     continue
+
+                # Format phone fields: combine area code + number into
+                # standard US format like (208) 556-9898
+                for ac_field, ph_field in PHONE_PAIRS:
+                    ac = vals.get(ac_field, '')
+                    ph = vals.get(ph_field, '')
+                    combined = (ac + ph).strip()
+                    if combined:
+                        vals[ph_field] = _format_phone_digits(combined)
 
                 vals_list.append(vals)
 

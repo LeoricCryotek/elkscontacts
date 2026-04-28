@@ -67,6 +67,56 @@ class ResPartner(models.Model):
             )
 
     # ------------------------------------------------------------------
+    # Suspension
+    # ------------------------------------------------------------------
+    x_is_suspended = fields.Boolean(
+        "Suspended", default=False, tracking=True, index=True,
+        help="Member is currently under suspension.",
+    )
+    x_suspension_start_date = fields.Date(
+        "Suspension Start Date", tracking=True,
+        help="Date the suspension began.",
+    )
+    x_suspension_end_date = fields.Date(
+        "Suspension End Date", tracking=True,
+        help="Date the suspension is scheduled to end.",
+    )
+    x_suspension_notes = fields.Text(
+        "Suspension Notes", tracking=True,
+        help="Reason or notes regarding the suspension.",
+    )
+
+    def action_suspend_member(self):
+        """Open the suspension wizard so the user can enter dates and reason."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Suspend Member'),
+            'res_model': 'elks.suspension.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_partner_id': self.id,
+            },
+        }
+
+    def action_lift_suspension(self):
+        """Remove the suspension flag."""
+        today = fields.Date.context_today(self)
+        for rec in self:
+            rec.write({
+                'x_is_suspended': False,
+                'x_suspension_end_date': today,
+            })
+            rec.message_post(
+                body=_(
+                    "<b>Suspension Lifted</b> — cleared by %s on %s.",
+                    self.env.user.name, today,
+                ),
+                subtype_xmlid='mail.mt_note',
+            )
+
+    # ------------------------------------------------------------------
     # Dues
     # ------------------------------------------------------------------
     x_is_dues_paid = fields.Boolean(
@@ -89,6 +139,75 @@ class ResPartner(models.Model):
         for rec in self:
             d = rec.x_detail_dues_paid_to_date
             rec.x_is_dues_paid = bool(d and d > cutoff)
+
+    # ------------------------------------------------------------------
+    # Drop / Undrop (replaces Archive/Unarchive for members)
+    # ------------------------------------------------------------------
+    x_drop_reason = fields.Selection([
+        ('nonpayment', 'Non-Payment of Dues'),
+        ('resigned', 'Resigned'),
+        ('expelled', 'Expelled'),
+        ('deceased', 'Deceased'),
+        ('other', 'Other'),
+    ], string="Drop Reason", tracking=True)
+    x_drop_date = fields.Date(
+        "Date Dropped", tracking=True,
+        help="Date the member was dropped from the rolls.",
+    )
+    x_drop_notes = fields.Text(
+        "Drop Notes", tracking=True,
+        help="Additional details about why the member was dropped.",
+    )
+
+    def action_archive(self):
+        """Override archive to route members through the Drop wizard."""
+        members = self.filtered(lambda r: r.x_is_member)
+        non_members = self - members
+        # Non-members get the standard archive behavior
+        if non_members:
+            super(ResPartner, non_members).action_archive()
+        # Members must go through the Drop wizard
+        if members:
+            if len(members) > 1:
+                # For multi-select, open wizard for the first, archive the rest
+                # (edge case — usually done one at a time)
+                return members[0].action_open_drop_wizard()
+            return members.action_open_drop_wizard()
+        return True
+
+    def action_open_drop_wizard(self):
+        """Open the Drop Member wizard."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Drop Member'),
+            'res_model': 'elks.drop.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_partner_id': self.id,
+            },
+        }
+
+    def action_unarchive(self):
+        """Override unarchive to log 'Restored' and clear drop fields."""
+        result = super().action_unarchive()
+        for rec in self:
+            if rec.x_is_member or rec.x_drop_reason:
+                rec.write({
+                    'x_drop_reason': False,
+                    'x_drop_date': False,
+                    'x_drop_notes': False,
+                })
+                rec.message_post(
+                    body=_(
+                        "<b>Member Restored</b> — reactivated by %s. "
+                        "Drop reason cleared.",
+                        self.env.user.name,
+                    ),
+                    subtype_xmlid='mail.mt_note',
+                )
+        return result
 
     @api.model
     def cron_update_is_dues_paid(self):

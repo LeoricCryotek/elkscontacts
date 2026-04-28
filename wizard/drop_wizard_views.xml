@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_elks_drop_wizard_form" model="ir.ui.view">
+        <field name="name">elks.drop.wizard.form</field>
+        <field name="model">elks.drop.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Drop Member">
+                <group>
+                    <field name="partner_id" readonly="1"/>
+                    <field name="partner_member_num"/>
+                    <field name="drop_date"/>
+                </group>
+                <group string="Reason for Dropping" col="2">
+                    <field name="reason_nonpayment"/>
+                    <field name="reason_resigned"/>
+                    <field name="reason_expelled"/>
+                    <field name="reason_deceased"/>
+                    <field name="reason_other"/>
+                </group>
+                <group string="Notes" col="1">
+                    <field name="drop_notes" nolabel="1"
+                           placeholder="Enter additional details..."
+                           widget="text"/>
+                </group>
+                <footer>
+                    <button name="action_confirm_drop"
+                            string="Confirm Drop" type="object"
+                            class="btn-primary"/>
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

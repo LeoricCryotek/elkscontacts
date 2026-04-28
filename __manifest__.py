@@ -14,6 +14,8 @@
         "wizard/initiate_wizard_views.xml",
         "wizard/volunteer_link_wizard_views.xml",
         "wizard/volunteer_signup_wizard_views.xml",
+        "wizard/suspension_wizard_views.xml",
+        "wizard/drop_wizard_views.xml",
         "wizard/clms_import_wizard_views.xml",
         "views/elks_contact_views.xml",
         "views/elks_action.xml",
@@ -35,6 +37,11 @@
         "data/elks_membership_application_data.xml",
         "data/elks_cron.xml",
     ],
+    "assets": {
+        "web.assets_backend": [
+            "elkscontacts/static/src/css/elkscontacts.css",
+        ],
+    },
     "installable": True,
     "application": True,
     "pre_init_hook": "_pre_init_set_application_defaults",

@@ -197,6 +197,37 @@ class ResPartner(models.Model):
     )
 
     # ----------------------------
+    # Member history dates (populated from membership application)
+    # ----------------------------
+    x_date_proposed = fields.Date(
+        "Date Proposed",
+        help="Date this member's application was proposed to the lodge.",
+    )
+    x_date_elected = fields.Date(
+        "Date Elected",
+        help="Date this member was elected by ballot.",
+    )
+    x_date_initiated = fields.Date(
+        "Date Initiated",
+        help="Date this member was formally initiated.",
+    )
+    x_date_of_birth = fields.Date(
+        "Date of Birth",
+        help="Member's date of birth.",
+    )
+    x_birth_city = fields.Char("Birth City")
+    x_birth_county = fields.Char("Birth County")
+    x_birth_state_id = fields.Many2one(
+        'res.country.state', string="Birth State",
+        domain="[('country_id.code', '=', 'US')]",
+    )
+    x_birth_country_id = fields.Many2one(
+        'res.country', string="Birth Country",
+    )
+    x_occupation = fields.Char("Occupation")
+    x_employer = fields.Char("Employer / Business")
+
+    # ----------------------------
     # Misc
     # ----------------------------
     x_maiden_name = fields.Char("MaidenName")
@@ -213,6 +244,14 @@ class ResPartner(models.Model):
     x_officer_term_ids = fields.One2many(
         'elks.officer.term', 'partner_id',
         string='Officer Term History',
+    )
+
+    # ----------------------------
+    # Member History (CLMS Elk History)
+    # ----------------------------
+    x_member_history_ids = fields.One2many(
+        'elks.member.history', 'partner_id',
+        string='Elk History',
     )
 
     # ----------------------------
@@ -355,16 +394,40 @@ class ResPartner(models.Model):
         return " ".join(parts).strip()
 
     def _compose_phone(self, area, number, ext=None):
+        """Compose a US-formatted phone number from area code + number parts.
+
+        Examples:
+            ('208', '5569598')  → '(208) 556-9598'
+            ('208', '556-9598') → '(208) 556-9598'
+            ('', '5569598')     → '556-9598'
+        """
+        import re
         area = (area or "").strip()
         number = (number or "").strip()
         ext = (ext or "").strip() if ext else ""
         if not area and not number:
             return False
-        core = number
-        if area and number:
-            core = f"{area}-{number}" if "-" not in number and " " not in number else f"{area} {number}"
-        elif area:
-            core = area
+
+        # Strip all non-digit characters to normalize
+        area_digits = re.sub(r'\D', '', area)
+        num_digits = re.sub(r'\D', '', number)
+
+        # Combine all digits to determine formatting
+        all_digits = area_digits + num_digits
+
+        if len(all_digits) == 10:
+            # Full 10-digit US number: (XXX) XXX-XXXX
+            core = f"({all_digits[:3]}) {all_digits[3:6]}-{all_digits[6:]}"
+        elif len(all_digits) == 7:
+            # 7-digit local number: XXX-XXXX
+            core = f"{all_digits[:3]}-{all_digits[4:]}" if len(all_digits) > 4 else all_digits
+            core = f"{all_digits[:3]}-{all_digits[3:]}"
+        elif area_digits and num_digits:
+            # Non-standard length — best effort with parens
+            core = f"({area_digits}) {num_digits}"
+        else:
+            core = area_digits or num_digits
+
         if ext:
             core = f"{core} x{ext}"
         return core

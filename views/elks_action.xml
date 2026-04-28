@@ -7,4 +7,36 @@
         <field name="state">code</field>
         <field name="code">records.action_apply_elks_mapping()</field>
     </record>
+
+    <record id="ir_actions_server_suspend_member" model="ir.actions.server">
+        <field name="name">Suspend Member</field>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="binding_model_id" ref="base.model_res_partner"/>
+        <field name="state">code</field>
+        <field name="code">action = records.action_suspend_member()</field>
+    </record>
+
+    <record id="ir_actions_server_lift_suspension" model="ir.actions.server">
+        <field name="name">Lift Suspension</field>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="binding_model_id" ref="base.model_res_partner"/>
+        <field name="state">code</field>
+        <field name="code">records.action_lift_suspension()</field>
+    </record>
+
+    <record id="ir_actions_server_drop_member" model="ir.actions.server">
+        <field name="name">Drop Member</field>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="binding_model_id" ref="base.model_res_partner"/>
+        <field name="state">code</field>
+        <field name="code">records.action_archive()</field>
+    </record>
+
+    <record id="ir_actions_server_restore_member" model="ir.actions.server">
+        <field name="name">Restore Dropped Member</field>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="binding_model_id" ref="base.model_res_partner"/>
+        <field name="state">code</field>
+        <field name="code">records.action_unarchive()</field>
+    </record>
 </odoo>

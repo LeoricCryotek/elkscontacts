@@ -26,7 +26,11 @@
                     <button name="action_open_initiate_wizard"
                             string="Initiate Member" type="object"
                             class="btn-success"
-                            invisible="stage != 'elected'"/>
+                            invisible="stage != 'elected' or application_type == 'reinstatement'"/>
+                    <button name="action_reinstate_member"
+                            string="Reinstate Member" type="object"
+                            class="btn-success"
+                            invisible="stage != 'elected' or application_type != 'reinstatement'"/>
                     <button name="action_create_initiation_payment"
                             string="Create Initiation Payment" type="object"
                             class="btn-secondary"
@@ -69,13 +73,21 @@
                             <field name="lodge_year" readonly="1"/>
                         </group>
                         <group string="Applicant">
+                            <field name="applicant_partner_id"
+                                   string="Lookup Dropped Member"
+                                   invisible="application_type != 'reinstatement'"
+                                   domain="[('active', '=', False)]"
+                                   context="{'active_test': False}"
+                                   options="{'no_create': True}"/>
                             <field name="applicant_first_name"/>
                             <field name="applicant_middle_name"/>
                             <field name="applicant_last_name"/>
+                            <field name="applicant_maiden_name"/>
                             <field name="applicant_suffix"/>
                             <field name="applicant_sex"/>
                             <field name="applicant_date_of_birth"/>
                             <field name="applicant_birth_city"/>
+                            <field name="applicant_birth_county"/>
                             <field name="applicant_birth_country_id"
                                    options="{'no_create': True, 'no_open': True}"/>
                             <field name="applicant_birth_state_id"
@@ -83,7 +95,7 @@
                         </group>
                     </group>
                     <group invisible="application_type == 'new'"
-                           string="Reinstatement / Affiliation Details">
+                           string="Transfer / Reinstatement Details">
                         <group string="Previous Lodge">
                             <field name="reinstatement_previous_lodge"/>
                             <field name="reinstatement_previous_state"
@@ -140,6 +152,15 @@
                         </page>
 
                         <page string="Application Questions" name="questions">
+                            <field name="attestation_warning" invisible="1"/>
+                            <div class="alert alert-warning mb-3" role="alert"
+                                 invisible="not attestation_warning">
+                                <i class="fa fa-exclamation-triangle" title="Warning"/>
+                                <strong> Missing Attestations</strong> —
+                                One or more required attestations below are not checked.
+                                All required attestations must be confirmed before the
+                                application can proceed to investigation.
+                            </div>
                             <group string="Required Attestations">
                                 <group>
                                     <field name="q_belief_in_god"/>
@@ -150,7 +171,6 @@
                                 <group>
                                     <field name="q_never_convicted_felony"/>
                                     <field name="q_bona_fide_resident"/>
-                                    <field name="q_good_character"/>
                                     <field name="q_authorize_electronic"/>
                                 </group>
                             </group>
@@ -212,16 +232,26 @@
 
                         <page string="Initiation" name="initiation">
                             <group>
-                                <group>
-                                    <field name="date_elected"/>
+                                <group string="Dates">
+                                    <field name="date_applicant_notified"/>
+                                    <field name="date_indoctrination"/>
                                     <field name="date_initiated"/>
-                                    <field name="member_number_assigned"/>
-                                    <field name="applicant_partner_id"/>
                                 </group>
-                                <group>
+                                <group string="Fees">
                                     <field name="initiation_fee_paid"/>
+                                    <field name="initiation_fee_amount"
+                                           invisible="not initiation_fee_paid"/>
+                                    <field name="prorated_dues"/>
+                                    <field name="prorated_dues_date_paid"/>
                                     <field name="dues_paid"/>
                                     <field name="dues_payment_ref" readonly="1"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Membership">
+                                    <field name="member_number_assigned"/>
+                                    <field name="date_clms_entered"/>
+                                    <field name="applicant_partner_id"/>
                                 </group>
                             </group>
                         </page>
@@ -246,6 +276,7 @@
             <list>
                 <field name="name"/>
                 <field name="application_type" optional="show"/>
+                <field name="dimit_type" optional="hide"/>
                 <field name="date_proposed"/>
                 <field name="applicant_display_name"/>
                 <field name="proposer_id"/>
@@ -300,6 +331,8 @@
                         domain="[('application_type', '=', 'reinstatement')]"/>
                 <filter string="Affiliations" name="filter_affiliation"
                         domain="[('application_type', '=', 'affiliation')]"/>
+                <filter string="Transfer Dimits" name="filter_transfer_dimit"
+                        domain="[('application_type', '=', 'transfer_dimit')]"/>
                 <separator/>
                 <group>
                     <filter string="Stage" name="group_stage" context="{'group_by': 'stage'}"/>

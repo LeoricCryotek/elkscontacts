@@ -102,6 +102,28 @@
                         invisible="not x_return_to_sender">
                     <span>RTS Flagged</span>
                 </button>
+                <button name="action_open_drop_wizard"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-user-times"
+                        invisible="not x_is_member">
+                    <span>Drop Member</span>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Member Suspension ribbon on contact form (like Dropped ribbon) -->
+    <record id="view_partner_form_elks_suspension" model="ir.ui.view">
+        <field name="name">res.partner.form.elks.suspension</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="priority" eval="12"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <widget name="web_ribbon" title="Suspended"
+                        bg_color="text-bg-danger"
+                        invisible="not x_is_suspended"/>
             </xpath>
         </field>
     </record>
@@ -136,6 +158,43 @@
                             <field name="x_detail_last_name" string="Last Name"/>
                             <field name="x_detail_name_suffix" string="Name Suffix"/>
                             <field name="x_maiden_name" string="Maiden Name"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Member History Dates">
+                            <field name="x_date_proposed" string="Date Proposed"/>
+                            <field name="x_date_elected" string="Date Elected"/>
+                            <field name="x_date_initiated" string="Date Initiated"/>
+                            <field name="x_date_of_birth" string="Date of Birth"/>
+                        </group>
+                        <group string="Personal Details">
+                            <field name="x_birth_city" string="Birth City"/>
+                            <field name="x_birth_county" string="Birth County"/>
+                            <field name="x_birth_state_id" string="Birth State"/>
+                            <field name="x_birth_country_id" string="Birth Country"/>
+                            <field name="x_occupation" string="Occupation"/>
+                            <field name="x_employer" string="Employer"/>
+                        </group>
+                    </group>
+
+                    <group invisible="not x_is_suspended">
+                        <group string="Suspension">
+                            <field name="x_suspension_start_date" string="Suspension Start"/>
+                            <field name="x_suspension_end_date" string="Suspension End"/>
+                        </group>
+                        <group string="Suspension Notes">
+                            <field name="x_suspension_notes" string="" nolabel="1"/>
+                        </group>
+                    </group>
+
+                    <group invisible="not x_drop_reason">
+                        <group string="Drop Information">
+                            <field name="x_drop_reason" string="Drop Reason"/>
+                            <field name="x_drop_date" string="Date Dropped"/>
+                        </group>
+                        <group string="Drop Notes">
+                            <field name="x_drop_notes" string="" nolabel="1"/>
                         </group>
                     </group>
 
@@ -214,6 +273,24 @@
 
                 <page string="Elks History" name="elks_history"
                       invisible="not x_is_member and not x_is_initiate">
+
+                    <separator string="Elk History"/>
+                    <field name="x_member_history_ids">
+                        <list editable="bottom">
+                            <field name="event_type" string="Type"/>
+                            <field name="event_date" string="Date"/>
+                            <field name="lodge_num_1" string="LodgeNum1" optional="show"/>
+                            <field name="number_1" string="Number1" optional="show"/>
+                            <field name="comment_1" string="Comment1" optional="show"/>
+                            <field name="comment_2" string="Comment2" optional="show"/>
+                            <field name="lodge_num_2" string="LodgeNum2" optional="hide"/>
+                            <field name="number_2" string="Number2" optional="hide"/>
+                            <field name="lost_years" string="LostYears" optional="hide"/>
+                            <field name="chg" string="Chg" optional="hide"/>
+                            <field name="chg_year" string="ChgYear" optional="hide"/>
+                            <field name="source" optional="hide"/>
+                        </list>
+                    </field>
 
                     <!-- Titles &amp; Honors -->
                     <group string="Current Title &amp; Honors">

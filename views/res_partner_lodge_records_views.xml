@@ -28,11 +28,7 @@
                 <field name="x_local_sanitation" invisible="not x_local_volunteer_active"/>
               </group>
             </group>
-            <group>
-              <group string="Membership Status">
-                <field name="x_is_not_member" string="Non-Elks Member"/>
-              </group>
-            </group>
+            <!-- Non-Elks Member toggle removed — redundant with x_is_member toggle at top -->
           </page>
         </xpath>
       </field>

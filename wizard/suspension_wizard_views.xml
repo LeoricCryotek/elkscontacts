@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_elks_suspension_wizard_form" model="ir.ui.view">
+        <field name="name">elks.suspension.wizard.form</field>
+        <field name="model">elks.suspension.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Suspend Member">
+                <group>
+                    <field name="partner_id" readonly="1"/>
+                    <field name="suspension_start_date"/>
+                    <field name="suspension_end_date"/>
+                </group>
+                <group string="Reason" col="1">
+                    <field name="suspension_notes" nolabel="1"
+                           placeholder="Enter the reason for suspension..."
+                           widget="text"/>
+                </group>
+                <footer>
+                    <button name="action_confirm_suspension"
+                            string="Confirm Suspension" type="object"
+                            class="btn-primary"/>
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

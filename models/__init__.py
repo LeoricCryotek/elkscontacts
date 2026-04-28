@@ -6,5 +6,6 @@ from . import elks_charitable
 from . import hr_employee
 from . import res_partner
 from . import res_user
+from . import elks_member_history
 from . import elks_membership_application
 from . import base_import_flex
