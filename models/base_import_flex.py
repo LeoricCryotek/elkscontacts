@@ -10,7 +10,16 @@ raising the error.  This lets the same CSV contain '2027-04-01' (ISO),
 import datetime
 
 from odoo import fields, models, _
-from odoo.addons.base_import.models.base_import import ImportValidationError
+
+try:
+    from odoo.addons.base_import.models.base_import import ImportValidationError
+except ImportError:
+    # Fallback if the base_import addon structure differs between Odoo builds
+    class ImportValidationError(Exception):
+        def __init__(self, message, **kwargs):
+            self.field = kwargs.get('field')
+            self.field_type = kwargs.get('field_type')
+            super().__init__(message)
 
 DEFAULT_SERVER_DATE_FORMAT = '%Y-%m-%d'
 DEFAULT_SERVER_DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'

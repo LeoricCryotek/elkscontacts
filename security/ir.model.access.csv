@@ -13,6 +13,3 @@ access_elks_volunteer_signup_wizard_match,elks.volunteer.signup.wizard.match,elk
 access_clms_import_wizard,clms.import.wizard,elkscontacts.model_clms_import_wizard,base.group_user,1,1,1,1
 access_elks_ballot_wizard,elks.ballot.wizard,elkscontacts.model_elks_ballot_wizard,base.group_user,1,1,1,1
 access_elks_initiate_wizard,elks.initiate.wizard,elkscontacts.model_elks_initiate_wizard,base.group_user,1,1,1,1
-access_elks_member_history,elks.member.history,elkscontacts.model_elks_member_history,base.group_user,1,1,1,1
-access_elks_suspension_wizard,elks.suspension.wizard,elkscontacts.model_elks_suspension_wizard,base.group_user,1,1,1,1
-access_elks_drop_wizard,elks.drop.wizard,elkscontacts.model_elks_drop_wizard,base.group_user,1,1,1,1
