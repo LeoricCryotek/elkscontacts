@@ -84,7 +84,7 @@ class ResPartner(models.Model):
     # ----------------------------
     # Membership / Lodge
     # ----------------------------
-    x_is_not_member = fields.Boolean("Is not an Elks Member", index=True)
+    x_is_not_member = fields.Boolean("Is not an Elks Member", default=True, index=True)
     x_is_member = fields.Boolean(
         "Is Elks Member",
         compute='_compute_x_is_member',
