@@ -37,7 +37,7 @@
             <th style="width: 25%;">Member</th>
             <th style="width: 20%;">Contact</th>
             <th style="width: 10%;">Partial Year</th>
-            <th style="width: 15%;">Notes</th>
+            <th style="width: 15%;">Message</th>
           </tr>
         </thead>
         <tbody>
@@ -61,7 +61,7 @@
                 <t t-if="term.partial_year">Yes</t>
               </td>
               <td>
-                <t t-esc="term.notes or ''"/>
+                <t t-esc="term.message or ''"/>
               </td>
             </tr>
           </t>

@@ -24,20 +24,8 @@
         </div>
       </xpath>
 
-      <!-- Officer Term History tab on partner form (after Lodge Records) -->
-      <xpath expr="//page[@name='lodge_records']" position="after">
-        <page string="Officer History" name="officer_history" invisible="x_is_not_member">
-          <field name="x_officer_term_ids">
-            <list editable="bottom">
-              <field name="lodge_year"/>
-              <field name="position"/>
-              <field name="officer_type"/>
-              <field name="partial_year"/>
-              <field name="notes"/>
-            </list>
-          </field>
-        </page>
-      </xpath>
+      <!-- Officer History tab removed — officer terms are managed
+           in the Elks History tab and via the standalone Officer Terms menu -->
 
     </field>
   </record>
@@ -50,13 +38,18 @@
     <field name="name">elks.officer.term.list</field>
     <field name="model">elks.officer.term</field>
     <field name="arch" type="xml">
-      <list>
+      <list decoration-muted="not active">
+        <field name="active" column_invisible="1"/>
         <field name="lodge_year"/>
         <field name="position"/>
         <field name="partner_id"/>
         <field name="officer_type"/>
         <field name="partial_year"/>
-        <field name="notes"/>
+        <field name="date_start" optional="show"/>
+        <field name="date_end" optional="show"/>
+        <field name="gender" optional="show"/>
+        <field name="show_on_website" optional="show"/>
+        <field name="message" optional="hide"/>
       </list>
     </field>
   </record>
@@ -67,20 +60,32 @@
     <field name="arch" type="xml">
       <form>
         <sheet>
+          <div class="oe_button_box" name="button_box"/>
+          <field name="image_1920" widget="image" class="oe_avatar"
+                 options="{'preview_image': 'image_1920'}"/>
+          <div class="oe_title">
+            <h1><field name="display_name"/></h1>
+          </div>
           <group>
-            <group>
+            <group string="Position Details">
               <field name="partner_id"/>
               <field name="position"/>
               <field name="officer_type"/>
-            </group>
-            <group>
               <field name="lodge_year"/>
               <field name="partial_year"/>
+              <field name="date_start"/>
+              <field name="date_end"/>
+              <field name="gender"/>
+            </group>
+            <group string="Website Display">
+              <field name="officer_email" widget="email"/>
+              <field name="officer_phone" widget="phone"/>
+              <field name="show_on_website"/>
             </group>
           </group>
-          <group>
-            <field name="notes"/>
-          </group>
+          <separator string="Public Message"/>
+          <field name="message" nolabel="1"
+                 placeholder="Write a public bio or message for the website..."/>
         </sheet>
       </form>
     </field>
@@ -94,6 +99,12 @@
         <field name="partner_id"/>
         <field name="position"/>
         <field name="lodge_year"/>
+        <separator/>
+        <filter name="filter_active" string="Active" domain="[('active', '=', True)]"/>
+        <filter name="filter_archived" string="Archived"
+                domain="[('active', '=', False)]"/>
+        <filter name="filter_partial" string="Partial Year"
+                domain="[('partial_year', '=', True)]"/>
         <separator/>
         <filter name="group_year" string="Lodge Year" context="{'group_by': 'lodge_year'}"/>
         <filter name="group_position" string="Position" context="{'group_by': 'position'}"/>

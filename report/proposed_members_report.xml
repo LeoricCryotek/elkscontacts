@@ -32,98 +32,96 @@
         <t t-call="web.html_container">
             <t t-set="settings" t-value="docs[0].env['elks.lodge.settings'].sudo().search([], limit=1)" t-if="docs"/>
 
-            <div class="page" style="font-size: 11px;">
+            <div class="page" style="font-size: 11px; padding: 0; margin: 0;">
                 <!-- ===== LODGE HEADER WITH LOGOS ===== -->
-                <table style="width: 100%; margin-bottom: 10px; border: none;">
+                <table style="width: 100%; margin-bottom: 6px; border: none;">
                     <tr>
                         <td style="width: 15%; text-align: center; vertical-align: middle; border: none; padding: 0;">
                             <t t-if="settings and settings.logo_primary">
                                 <img t-att-src="image_data_uri(settings.logo_primary)"
-                                     style="max-height: 80px; max-width: 100px;" alt="Elks USA"/>
+                                     style="max-height: 70px; max-width: 90px;" alt="Elks USA"/>
                             </t>
                         </td>
                         <td style="text-align: center; vertical-align: middle; border: none; padding: 0 10px;">
-                            <h2 style="font-size: 22px; margin: 0 0 2px 0; color: #333;">
+                            <h2 style="font-size: 20px; margin: 0 0 2px 0; color: #333;">
                                 <t t-if="settings and settings.name"><span t-field="settings.name"/></t>
                                 <t t-else="">Elks Lodge</t>
                                 <t t-if="settings and settings.lodge_number">
                                     #<span t-field="settings.lodge_number"/>
                                 </t>
                             </h2>
-                            <p style="color: #777; font-size: 11px; margin: 0;">
+                            <p style="color: #777; font-size: 10px; margin: 0;">
                                 Benevolent and Protective Order of Elks
                             </p>
-                            <h3 style="font-size: 18px; margin: 6px 0 0 0; color: #003366;">
+                            <h3 style="font-size: 15px; margin: 4px 0 0 0; color: #003366;">
                                 Proposed Members Report
                             </h3>
                         </td>
                         <td style="width: 15%; text-align: center; vertical-align: middle; border: none; padding: 0;">
                             <t t-if="settings and settings.logo_lodge">
                                 <img t-att-src="image_data_uri(settings.logo_lodge)"
-                                     style="max-height: 80px; max-width: 100px;" alt="Lodge Logo"/>
+                                     style="max-height: 70px; max-width: 90px;" alt="Lodge Logo"/>
                             </t>
                         </td>
                     </tr>
                 </table>
-                <div style="border-top: 2px solid #003366; margin-bottom: 15px;"/>
+                <div style="border-top: 2px solid #003366; margin-bottom: 8px;"/>
 
-                <!-- Title row -->
-                <table style="width:100%; margin-bottom:30px;">
-                    <tr>
-                        <td style="width:50%; vertical-align:top;">
-                            <h2 style="margin:0; font-weight:bold; font-size: 32px;">Proposed</h2>
-                        </td>
-                        <td style="width:50%; text-align:right; vertical-align:top;">
-                            <h2 style="margin:0; font-weight:bold; font-size: 32px;">Proposed by</h2>
-                        </td>
-                    </tr>
-                </table>
-
-                    <!-- Group by proposer + date for the classic layout -->
-                    <table style="width:100%; border-collapse:collapse; font-size: 18px;">
+                <!-- Column headers -->
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #003366;">
+                            <th style="width:12%; text-align:left; padding:4px 6px; font-size:11px; color:#003366;">Date</th>
+                            <th style="width:30%; text-align:left; padding:4px 6px; font-size:11px; color:#003366;">Applicant</th>
+                            <th style="width:18%; text-align:left; padding:4px 6px; font-size:11px; color:#003366;">City / State</th>
+                            <th style="width:12%; text-align:center; padding:4px 6px; font-size:11px; color:#003366;">Type</th>
+                            <th style="width:28%; text-align:right; padding:4px 6px; font-size:11px; color:#003366;">Proposed By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                         <t t-set="sorted_apps" t-value="docs.sorted(key=lambda a: (a.date_proposed or ''))"/>
                         <t t-foreach="sorted_apps" t-as="app">
-                            <tr style="vertical-align:top;">
-                                <td style="width:55%; padding:10px 12px 10px 0; border-bottom:1px solid #ccc;">
+                            <tr t-attf-style="background: {{ 'white' if app_index % 2 == 0 else '#f0f4f8' }}; vertical-align:top;">
+                                <td style="padding:4px 6px; font-size:11px; border-bottom:1px solid #ddd;">
                                     <span t-if="app.date_proposed"
                                           t-field="app.date_proposed"
-                                          t-options='{"format": "M/d/yyyy"}'
-                                          style="display:block; font-size:15px; color:#666;"/>
-                                    <strong style="font-size: 20px;" t-field="app.applicant_display_name"/>
-                                    <t t-if="app.application_type != 'new'">
-                                        <span style="font-size:14px; color:#888; margin-left:8px;">
-                                            (<t t-esc="dict(app._fields['application_type'].selection).get(app.application_type, '')"/>)
-                                        </span>
-                                    </t>
-                                    <t t-if="app.applicant_city or app.applicant_state_id">
-                                        <br/>
-                                        <span style="font-size:16px; color:#555;">
-                                            <t t-if="app.applicant_city"><t t-esc="app.applicant_city"/></t>
-                                            <t t-if="app.applicant_city and app.applicant_state_id">, </t>
-                                            <t t-if="app.applicant_state_id"><t t-esc="app.applicant_state_id.name"/></t>
-                                        </span>
-                                    </t>
+                                          t-options='{"format": "M/d/yy"}'/>
                                 </td>
-                                <td style="width:45%; padding:10px 0; text-align:right; border-bottom:1px solid #ccc; font-size: 20px;">
+                                <td style="padding:4px 6px; font-size:11px; border-bottom:1px solid #ddd;">
+                                    <strong t-field="app.applicant_display_name"/>
+                                </td>
+                                <td style="padding:4px 6px; font-size:11px; border-bottom:1px solid #ddd; color:#555;">
+                                    <t t-if="app.applicant_city"><t t-esc="app.applicant_city"/></t>
+                                    <t t-if="app.applicant_city and app.applicant_state_id">, </t>
+                                    <t t-if="app.applicant_state_id"><t t-esc="app.applicant_state_id.name"/></t>
+                                </td>
+                                <td style="padding:4px 6px; font-size:10px; border-bottom:1px solid #ddd; text-align:center; color:#666;">
+                                    <t t-if="app.application_type != 'new'">
+                                        <t t-esc="dict(app._fields['application_type'].selection).get(app.application_type, '')"/>
+                                    </t>
+                                    <t t-else="">New</t>
+                                </td>
+                                <td style="padding:4px 6px; font-size:11px; border-bottom:1px solid #ddd; text-align:right;">
                                     <span t-field="app.proposer_id"/>
                                 </td>
                             </tr>
                         </t>
-                    </table>
+                    </tbody>
+                </table>
 
-                    <t t-if="not docs">
-                        <p style="margin-top:20px; color:#999; font-style:italic; font-size: 18px;">
-                            No proposed members to display.
-                        </p>
-                    </t>
+                <t t-if="not docs">
+                    <p style="margin-top:10px; color:#999; font-style:italic; font-size:11px;">
+                        No proposed members to display.
+                    </p>
+                </t>
 
-                    <!-- Footer with count and date -->
-                    <div style="margin-top:30px; font-size:14px; color:#888;">
-                        <span>Total: <t t-esc="len(docs)"/> applicant(s)</span>
-                        <span style="float:right;">
-                            Printed: <span t-esc="time.strftime('%m/%d/%Y')"/>
-                        </span>
-                    </div>
+                <!-- Footer with count and date -->
+                <div style="margin-top:12px; font-size:10px; color:#888; border-top:1px solid #ccc; padding-top:4px;">
+                    <span>Total: <t t-esc="len(docs)"/> applicant(s)</span>
+                    <span style="float:right;">
+                        Printed: <span t-esc="time.strftime('%m/%d/%Y')"/>
+                    </span>
+                </div>
                 </div>
         </t>
     </template>

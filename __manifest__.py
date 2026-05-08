@@ -1,12 +1,12 @@
 {
     "name": "Elks Contacts",
-    "version": "19.0.3.7",
+    "version": "19.0.3.8",
     "category": "Contacts",
     "summary": "Manage Elks Member Contact Information",
     "author": "Danny Santiago",
     "website": "https://dannysantiago.info",
     "license": "LGPL-3",
-    "depends": ["base", "base_import", "contacts", "hr", "hr_skills", "mail"],
+    "depends": ["base", "base_import", "contacts", "hr", "hr_skills", "mail", "website"],
     "data": [
         "security/ir.model.access.csv",
         "wizard/ballot_wizard_views.xml",
@@ -30,6 +30,7 @@
         "views/elks_charitable_views.xml",
         "views/elks_membership_application_views.xml",
         "views/elks_menus.xml",
+        "views/website_officers.xml",
         "report/officer_roster_report.xml",
         "report/proposed_members_report.xml",
         "data/elks_committee_data.xml",

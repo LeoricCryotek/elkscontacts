@@ -89,7 +89,14 @@ class ElksOfficerTerm(models.Model):
     _name = "elks.officer.term"
     _description = "Elks Officer Term"
     _order = "lodge_year desc, position"
-    _rec_name = "display_name"
+
+    active = fields.Boolean(
+        default=True,
+        help="Uncheck to archive this term.  Archived terms remain in the "
+             "member's history but are hidden from the website and default "
+             "list views.  When an officer is removed mid-year the record "
+             "is archived rather than deleted.",
+    )
 
     partner_id = fields.Many2one(
         "res.partner", string="Member", required=True,
@@ -110,6 +117,15 @@ class ElksOfficerTerm(models.Model):
              "When checked, another member may also hold the same position "
              "for the same year.",
     )
+    date_start = fields.Date(
+        "Term Start",
+        help="Date this officer began serving in this position.",
+    )
+    date_end = fields.Date(
+        "Term End",
+        help="Date this officer stopped serving.  Auto-set when the term "
+             "is archived mid-year.",
+    )
     officer_type = fields.Selection([
         ('elected', 'Elected Officer'),
         ('appointed', 'Appointed Officer'),
@@ -121,7 +137,38 @@ class ElksOfficerTerm(models.Model):
        store=True, readonly=False,
        help="Auto-set from Position but can be changed. Use this to mark "
             "an appointed officer who was later elected, or vice versa.")
-    notes = fields.Text(string="Notes")
+
+    # ── Website Display Fields (NOT linked to contact) ──────
+    image_1920 = fields.Image(
+        "Photo", max_width=1920, max_height=1920,
+        help="Officer photo for website display. Not linked to the contact record.",
+    )
+    officer_email = fields.Char(
+        "Officer Email",
+        help="Public email for this officer position (e.g. ER@lodge.com). "
+             "Shown on the website officer page.",
+    )
+    officer_phone = fields.Char(
+        "Officer Phone",
+        help="Public phone for this officer position. "
+             "Shown on the website officer page.",
+    )
+    gender = fields.Selection([
+        ('male', 'Male'),
+        ('female', 'Female'),
+    ], string="Gender", default='male',
+       help="Used for default Elk avatar if no photo is provided.",
+    )
+    message = fields.Text(
+        "Message",
+        help="Public message / bio displayed on the website officer page.",
+    )
+    show_on_website = fields.Boolean(
+        "Show on Website", default=True,
+        help="Uncheck to hide this officer from the public website page.",
+    )
+    # Backward-compatible alias so cached views referencing 'notes' still work
+    notes = fields.Text(related='message', string="Notes (deprecated)")
 
     display_name = fields.Char(
         compute="_compute_display_name", store=True,
@@ -176,50 +223,58 @@ class ElksOfficerTerm(models.Model):
             rec.display_name = f"{pos} - {name} ({rec.lodge_year})"
 
     # ── Constraints ──────────────────────────────────────────
-    @api.constrains('position', 'lodge_year', 'partial_year')
+    @api.constrains('position', 'lodge_year', 'partial_year', 'active')
     def _check_unique_position_per_year(self):
-        """Prevent two holders of the same position in the same lodge year
-        unless at least one of them is flagged as a partial-year term."""
+        """Only one *active*, non-partial holder per position per year.
+
+        Multiple holders are allowed when:
+        - one or more are archived (``active=False``), or
+        - all are flagged as partial-year terms.
+        """
         for rec in self:
-            if not rec.position or not rec.lodge_year:
+            if not rec.position or not rec.lodge_year or not rec.active:
                 continue
-            others = self.search([
+            # Only check against other active records
+            others = self.with_context(active_test=True).search([
                 ('id', '!=', rec.id),
                 ('position', '=', rec.position),
                 ('lodge_year', '=', rec.lodge_year),
+                ('active', '=', True),
             ])
             if not others:
                 continue
-            # If this record is partial, all others must also be partial
-            # If this record is NOT partial, no others are allowed
             if not rec.partial_year:
                 label = dict(OFFICER_POSITIONS).get(rec.position, rec.position)
                 raise ValidationError(_(
-                    "The position '%s' already has a holder for lodge year %s: %s. "
-                    "If this was a partial year served, check the 'Partial Year' box "
-                    "on both records."
+                    "The position '%s' already has an active holder for "
+                    "lodge year %s: %s. If this was a partial year served, "
+                    "check the 'Partial Year' box on both records, or "
+                    "archive the previous holder first."
                 ) % (label, rec.lodge_year, others[0].partner_id.display_name))
-            # If we're partial, check that existing ones are also partial
             non_partial = others.filtered(lambda o: not o.partial_year)
             if non_partial:
                 label = dict(OFFICER_POSITIONS).get(rec.position, rec.position)
                 raise ValidationError(_(
-                    "The position '%s' for lodge year %s is held by %s as a full term. "
-                    "To add a partial-year entry, first mark the existing record as "
-                    "'Partial Year' as well."
+                    "The position '%s' for lodge year %s is held by %s as "
+                    "a full term.  To add a partial-year entry, first mark "
+                    "the existing record as 'Partial Year' as well."
                 ) % (label, rec.lodge_year, non_partial[0].partner_id.display_name))
 
     @api.constrains('partner_id', 'position', 'lodge_year')
     def _check_no_duplicate_member_position(self):
         """Prevent the same member from being assigned the same position
-        twice in the same lodge year (regardless of partial_year flag)."""
+        twice in the same lodge year (regardless of partial_year flag).
+        Archived records are excluded from this check."""
         for rec in self:
             if not (rec.partner_id and rec.position and rec.lodge_year):
                 continue
-            dupes = self.search([
+            if not rec.active:
+                continue
+            dupes = self.with_context(active_test=True).search([
                 ('partner_id', '=', rec.partner_id.id),
                 ('position', '=', rec.position),
                 ('lodge_year', '=', rec.lodge_year),
+                ('active', '=', True),
                 ('id', '!=', rec.id),
             ])
             if dupes:
@@ -236,14 +291,16 @@ class ElksOfficerTerm(models.Model):
     # ── Sync current officer position to contact ────────────
     def _sync_officer_position_to_partner(self):
         """Update x_elks_officer_position on the partner based on the
-        most recent officer term for the current lodge year.  If the
-        partner has no term for the current year, clear the position."""
+        most recent *active* officer term for the current lodge year.
+        If the partner has no active term for the current year, clear
+        the position."""
         current_year = _default_lodge_year(self)
         partners = self.mapped('partner_id')
         for partner in partners:
-            term = self.search([
+            term = self.with_context(active_test=True).search([
                 ('partner_id', '=', partner.id),
                 ('lodge_year', '=', current_year),
+                ('active', '=', True),
             ], order='id desc', limit=1)
             new_pos = term.position if term else False
             if partner.x_elks_officer_position != new_pos:
@@ -261,17 +318,45 @@ class ElksOfficerTerm(models.Model):
             self._sync_officer_position_to_partner()
         return res
 
+    def action_archive_term(self):
+        """Archive an officer term mid-year instead of deleting.
+
+        Marks the record as partial year, sets the end date, hides from
+        website, and deactivates it.  The record remains in the member's
+        history for audit purposes.
+        """
+        today = fields.Date.today()
+        self.write({
+            'active': False,
+            'partial_year': True,
+            'show_on_website': False,
+            'date_end': today,
+        })
+        self._sync_officer_position_to_partner()
+
     def unlink(self):
-        partners = self.mapped('partner_id')
-        res = super().unlink()
-        # After deletion, re-check these partners
-        current_year = _default_lodge_year(self)
-        for partner in partners:
-            term = self.search([
-                ('partner_id', '=', partner.id),
-                ('lodge_year', '=', current_year),
-            ], order='id desc', limit=1)
-            new_pos = term.position if term else False
-            if partner.x_elks_officer_position != new_pos:
-                partner.write({'x_elks_officer_position': new_pos})
-        return res
+        """Prevent deletion of officer terms — archive them instead.
+
+        This preserves history.  Only truly empty/erroneous records
+        (created in the same session) can be deleted via the ORM.
+        """
+        for rec in self:
+            if rec.create_date and rec.partner_id:
+                # Archive instead of deleting
+                rec.action_archive_term()
+        # Filter out the ones we just archived
+        remaining = self.filtered(lambda r: not r.partner_id)
+        if remaining:
+            partners = remaining.mapped('partner_id')
+            res = super(ElksOfficerTerm, remaining).unlink()
+            current_year = _default_lodge_year(self)
+            for partner in partners:
+                term = self.search([
+                    ('partner_id', '=', partner.id),
+                    ('lodge_year', '=', current_year),
+                ], order='id desc', limit=1)
+                new_pos = term.position if term else False
+                if partner.x_elks_officer_position != new_pos:
+                    partner.write({'x_elks_officer_position': new_pos})
+            return res
+        return True

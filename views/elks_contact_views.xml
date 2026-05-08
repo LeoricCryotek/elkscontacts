@@ -312,13 +312,19 @@
                     </group>
 
                     <separator string="Officer Term History"/>
-                    <field name="x_officer_term_ids" readonly="1">
-                        <list>
+                    <field name="x_officer_term_ids"
+                           context="{'active_test': False}">
+                        <list editable="bottom" decoration-muted="not active">
+                            <field name="active" column_invisible="1"/>
                             <field name="lodge_year"/>
                             <field name="position"/>
                             <field name="officer_type"/>
                             <field name="partial_year"/>
-                            <field name="notes"/>
+                            <field name="date_start" optional="show"/>
+                            <field name="date_end" optional="show"/>
+                            <field name="gender" optional="show"/>
+                            <field name="show_on_website" optional="show"/>
+                            <field name="message" optional="hide"/>
                         </list>
                     </field>
 
