@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Elks Lodge role-based access groups
+        ====================================
+
+        These groups are owned by elkscontacts (the central lodge module)
+        so that any dependent module (elksfrs, elkssecretary, elksattendance,
+        elkscharity, audit_log, …) can reference them via the XML ID
+        `elkscontacts.group_elks_<role>` without taking a cross-dependency
+        on each other.
+
+        Privilege: "Elks Lodge" — appears as a row on the user's
+        Access Rights tab. Roles cascade upward: Officer implies Member,
+        Secretary implies Officer, Manager implies Secretary.
+    -->
+
+    <!-- Privilege block on the Access Rights tab -->
+    <record id="res_groups_privilege_elks" model="res.groups.privilege">
+        <field name="name">Elks Lodge</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+        <field name="sequence">55</field>
+    </record>
+
+    <!-- Level 1 - Member: rank-and-file lodge member with member-level access -->
+    <record id="group_elks_member" model="res.groups">
+        <field name="name">Member</field>
+        <field name="privilege_id" ref="res_groups_privilege_elks"/>
+        <field name="sequence">10</field>
+        <field name="comment">Lodge members. Read-only access to lodge directory and own membership data.</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Level 2 - Officer: elected/appointed lodge officers (ER, Trustees, etc.) -->
+    <record id="group_elks_officer" model="res.groups">
+        <field name="name">Officer</field>
+        <field name="privilege_id" ref="res_groups_privilege_elks"/>
+        <field name="sequence">20</field>
+        <field name="comment">Elected or appointed officers. Can view committee assignments, officer rosters, and member status.</field>
+        <field name="implied_ids" eval="[(4, ref('group_elks_member'))]"/>
+    </record>
+
+    <!--
+        Level 3 - Secretary: the lodge Secretary, the only role allowed
+        to (a) push payments into CLMS at Grand Lodge, (b) mark a payment
+        as Processed in CLMS in Odoo, (c) suspend/drop members.
+
+        This is the role that gates the "Mark as Processed in CLMS" button
+        on the Dues Payment form in elksfrs. Reception staff posting dues
+        payments must NOT have this group.
+    -->
+    <record id="group_elks_secretary" model="res.groups">
+        <field name="name">Secretary</field>
+        <field name="privilege_id" ref="res_groups_privilege_elks"/>
+        <field name="sequence">30</field>
+        <field name="comment">Lodge Secretary. Can process payments into CLMS, manage member records, suspend/drop members, and edit lodge records.</field>
+        <field name="implied_ids" eval="[(4, ref('group_elks_officer'))]"/>
+    </record>
+
+    <!--
+        Level 4 - Manager: full administrative access. Admins, IT, the
+        Exalted Ruler when acting as system manager. Implies Secretary.
+    -->
+    <record id="group_elks_manager" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="privilege_id" ref="res_groups_privilege_elks"/>
+        <field name="sequence">40</field>
+        <field name="comment">Full administrative access to all Elks lodge modules.</field>
+        <field name="implied_ids" eval="[(4, ref('group_elks_secretary'))]"/>
+        <field name="user_ids" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+    </record>
+</odoo>

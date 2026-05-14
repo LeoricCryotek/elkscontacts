@@ -5,7 +5,7 @@
 from datetime import date
 
 from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 import logging
 
@@ -1131,6 +1131,33 @@ class ResPartner(models.Model):
                     subtype_xmlid='mail.mt_note',
                 )
         return result
+
+    # ------------------------------------------------------------------
+    # Soft dependency on elksfrs — Pay Dues
+    # ------------------------------------------------------------------
+    # The Pay Dues smart button in views/elks_contact_views.xml binds to
+    # `action_pay_dues`. The *real* implementation lives in the elksfrs
+    # module (Financial Reporting System), which extends res.partner with
+    # invoice/payment workflow.
+    #
+    # We must define a stub here so that Odoo's view validator finds the
+    # method on res.partner when elkscontacts loads — elksfrs is loaded
+    # AFTER elkscontacts (it depends on us), so without this stub the view
+    # validation fails with "action_pay_dues is not a valid action on
+    # res.partner" and aborts the entire elkscontacts install/upgrade.
+    #
+    # When elksfrs is installed, its `_inherit = 'res.partner'` class is
+    # registered after ours, so Python MRO resolves `action_pay_dues` to
+    # the elksfrs implementation and this stub is never reached. When
+    # elksfrs is NOT installed, clicking the button raises the friendly
+    # error below instead of a generic "method does not exist" trace.
+    def action_pay_dues(self):
+        """Stub overridden by elksfrs. Raises UserError if elksfrs absent."""
+        raise UserError(_(
+            "The Elks FRS module must be installed to record dues "
+            "payments. Install or enable the 'elksfrs' module, then "
+            "try again."
+        ))
 
     @api.model
     def cron_update_is_dues_paid(self):

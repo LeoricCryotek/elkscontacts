@@ -357,5 +357,41 @@
             </xpath>
         </field>
     </record>
+
+    <!--
+        Pay Dues smart button - duplicated up onto the very front of the
+        smart button bar (Elks members only).
+
+        The action `action_pay_dues` is defined in the elksfrs module on
+        res.partner. We deliberately do NOT add elksfrs as a hard
+        dependency here; if elksfrs is not installed the button still
+        renders (invisible unless x_is_member) but a click will raise
+        the usual "method not found" error.
+
+        Priority 99 forces this view to be applied LAST in the inherit
+        chain so the xpath `.../oe_button_box/*[1]` targets whatever the
+        leading smart button currently is (after every other module has
+        contributed its buttons). The new button is inserted *before*
+        that first child, guaranteeing it appears at the very front of
+        the smart button list regardless of load order.
+    -->
+    <record id="view_partner_form_elks_pay_dues_front" model="ir.ui.view">
+        <field name="name">res.partner.form.elks.pay.dues.front</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="priority" eval="99"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('oe_button_box')]/*[1]" position="before">
+                <button name="action_pay_dues"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-money"
+                        invisible="not x_is_member"
+                        help="Pay this member's dues (action defined in elksfrs)">
+                    <span>Pay Dues</span>
+                </button>
+            </xpath>
+        </field>
+    </record>
 </odoo>
 

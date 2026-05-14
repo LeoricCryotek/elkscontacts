@@ -2,81 +2,153 @@
 <section class="oe_container oe_dark">
   <div class="oe_row oe_spaced">
     <h1 class="oe_slogan">Elks Contacts</h1>
-    <h2 class="oe_slogan">Smarter member records for Odoo 18</h2>
+    <h2 class="oe_slogan">Smarter member records for Odoo 19</h2>
     <div class="oe_span12">
       <p>
-        <strong>Elks Contacts</strong> extends <em>Contacts</em> to store and
-        maintain Elks Lodge member data on <code>res.partner</code>. It prevents
-        duplicate records on import, keeps members as individuals (not companies),
-        and maps your Elks data into native Odoo fields for cleaner day-to-day use.
+        <strong>Elks Contacts</strong> turns Odoo's <em>Contacts</em> app into a
+        full Elks Lodge member system. It stores every CLMS field on
+        <code>res.partner</code>, keeps members tagged with role toggles
+        (Elk / Volunteer / Customer / Initiate / Guest), tracks officer terms,
+        committee assignments, member history, suspensions, drops, and Return-to-Sender
+        flags &mdash; and stays out of the way for non-member contacts.
       </p>
     </div>
     <div class="oe_span12 oe_center oe_mt32">
-      <img class="oe_picture oe_screenshot" src="banner.png" alt="Elks Contacts banner"/>
-      <!-- Replace banner.png with your own image (1024x512 recommended) -->
+      <img class="oe_picture oe_screenshot" src="banner.png" alt="Elks Contacts &mdash; smarter member records for Odoo 19"/>
     </div>
   </div>
 </section>
 
 <section class="oe_container">
   <div class="oe_row oe_spaced">
-    <h3 class="oe_title">Key features</h3>
-    <ul>
-      <li><strong>De-dup on import by Member #</strong>:
-        If <code>x_detail_member_num</code> matches an existing contact (even archived),
-        the importer updates that record instead of creating a duplicate.</li>
-      <li><strong>Always a Person</strong>:
-        Imported/updated members are forced to <code>company_type = person</code> and <code>is_company = False</code>.</li>
-      <li><strong>Field mapping helpers</strong>:
-        Buttons/server action copy Elks fields (name parts, addresses, phones, email) into
-        native Odoo fields (<code>name, title, street, city, zip, state_id, country_id, phone, mobile, fax, email</code>).</li>
-      <li><strong>Officer roles</strong>:
-        Officer position with computed type (elected/appointed) and “is officer” flag,
-        plus a constraint to allow only one holder per role.</li>
-      <li><strong>Search filters</strong>:
-        Extra filters in Contacts (Elks Officers, Dues Paid/Overdue, Volunteers).</li>
-      <li><strong>Safety net</strong>:
-        SQL constraint ensures the Elks Member Number is unique across contacts.</li>
-    </ul>
+    <h3 class="oe_title">One contact, many roles</h3>
+    <div class="oe_span12">
+      <p>
+        Tag any contact as an Elk, Volunteer, Customer, Initiate, or Guest. The toggles
+        reveal the matching views, smart buttons, and tabs &mdash; so a kitchen volunteer
+        who happens to be a Life member sees both worlds on one record.
+      </p>
+    </div>
+    <div class="oe_span12 oe_center oe_mt16">
+      <img class="oe_picture oe_screenshot" src="feature_toggles.png" alt="Contact-type toggles: Elk, Volunteer, Customer, Initiate, Guest"/>
+    </div>
   </div>
 </section>
 
 <section class="oe_container oe_dark">
   <div class="oe_row oe_spaced">
+    <h3 class="oe_title">Smart-button bar &mdash; one-click member actions</h3>
+    <div class="oe_span12">
+      <p>
+        The smart buttons turn the contact form into the daily operating console.
+        <strong>Pay Dues</strong> sits at the front for reception; <strong>Mark RTS</strong>
+        flags returned mail; <strong>Drop Member</strong> opens the drop wizard with
+        the audit trail wired up. Every button respects the member toggles &mdash; non-Elks
+        never see them.
+      </p>
+    </div>
+    <div class="oe_span12 oe_center oe_mt16">
+      <img class="oe_picture oe_screenshot" src="feature_smart_buttons.png" alt="Smart button bar with Pay Dues, Mark RTS, Drop Member, etc."/>
+    </div>
+  </div>
+</section>
+
+<section class="oe_container">
+  <div class="oe_row oe_spaced">
+    <h3 class="oe_title">CLMS-aware from day one</h3>
+    <div class="oe_span12">
+      <p>
+        Every Grand Lodge CLMS field lives on the contact &mdash; member number,
+        dues-paid-through date, household, raw address, USPS / CASS validation,
+        spouse data, member-history events, officer terms, life-member dates,
+        military service, occupation. The CLMS tab keeps it all together and the
+        importer matches on member number to prevent duplicates.
+      </p>
+    </div>
+    <div class="oe_span12 oe_center oe_mt16">
+      <img class="oe_picture oe_screenshot" src="feature_clms_tab.png" alt="CLMS tab on the contact form showing membership and lodge fields"/>
+    </div>
+  </div>
+</section>
+
+<section class="oe_container oe_dark">
+  <div class="oe_row oe_spaced">
+    <h3 class="oe_title">Key features</h3>
+    <ul>
+      <li><strong>Role-based access groups</strong>:
+        Member &lt; Officer &lt; Secretary &lt; Manager. Other Elks modules
+        (elksfrs, elkssecretary, audit_log&hellip;) reference these groups
+        directly &mdash; e.g. only Secretary can mark a dues payment as
+        processed in CLMS.</li>
+      <li><strong>De-dup on import by Member #</strong>:
+        the importer updates the existing record (even if archived) instead of
+        creating a duplicate.</li>
+      <li><strong>Always-a-Person guard</strong>:
+        imported members are forced to <code>company_type = person</code>;
+        the name is composed from First / Middle / Last when blank.</li>
+      <li><strong>Officer term history</strong>:
+        every term a member has held, with start/end dates, partial-year flags,
+        and a website-publishable roster.</li>
+      <li><strong>Committee assignments</strong>:
+        track who's on which committee per lodge year, with date appointed/ended
+        and role within the committee.</li>
+      <li><strong>Membership applications</strong>:
+        full workflow from proposed &rarr; investigated &rarr; balloted &rarr;
+        initiated, with a ballot wizard, an initiation wizard, and tracked
+        committee assignments.</li>
+      <li><strong>Volunteer &harr; HR sync</strong>:
+        link a Volunteer contact to an <code>hr.employee</code> for timesheets
+        and skills, with a duplicate-merge wizard.</li>
+      <li><strong>Suspension &amp; Drop</strong>:
+        dedicated wizards with reason codes, date ranges, and a ribbon overlay on
+        the contact. Reinstatement clears the flags and logs to chatter.</li>
+      <li><strong>Return-to-Sender</strong>:
+        one click flags a contact when mail comes back undeliverable. Warning
+        banner appears on the contact until the address is updated.</li>
+      <li><strong>Search filters</strong>:
+        extra filters in Contacts &mdash; Elks Officers, Dues Paid / Overdue,
+        Volunteers, Suspended, Dropped, Return-to-Sender.</li>
+      <li><strong>Charitable activity</strong>:
+        log volunteer hours and donations per category for Grand Lodge reporting.</li>
+      <li><strong>Website officer roster</strong>:
+        publish current officers to your lodge website automatically.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="oe_container">
+  <div class="oe_row oe_spaced">
     <h3 class="oe_title">How it works</h3>
     <ol>
-      <li><strong>Import</strong> your CSV/XLSX into Contacts. When a row contains
-        <code>x_detail_member_num</code> already in the database, the module <em>merges/updates</em>
-        that contact instead of inserting a new one.</li>
-      <li>The module composes a display name from
-        <code>First/Middle/Last</code> when <code>name</code> is blank, and maps the title from salutation.</li>
-      <li>Addresses and phones are normalized and copied into standard fields; state/country are resolved by code or name.</li>
+      <li><strong>Import</strong> your CLMS export or any CSV / XLSX into Contacts.
+        Rows with a matching <code>x_detail_member_num</code> update the existing
+        contact instead of creating a duplicate.</li>
+      <li>The module composes the display name from First / Middle / Last when
+        blank, and maps the title from salutation.</li>
+      <li>Addresses and phones are normalized and copied into Odoo's native fields
+        (<code>name</code>, <code>title</code>, <code>street</code>, <code>city</code>,
+        <code>zip</code>, <code>state_id</code>, <code>country_id</code>,
+        <code>phone</code>, <code>mobile</code>, <code>fax</code>, <code>email</code>);
+        state and country are resolved by code or name.</li>
       <li>Members are kept as <em>individuals</em> on both create and write.</li>
+      <li>Stored computed fields (<code>x_is_member</code>, <code>x_is_elks_officer</code>,
+        <code>x_is_dues_paid</code>) drive the toggle visibility, search filters, and
+        any module that depends on Elks role data.</li>
     </ol>
   </div>
 </section>
 
-<section class="oe_container">
-  <div class="oe_row oe_spaced">
-    <h3 class="oe_title">Menus & Actions</h3>
-    <ul>
-      <li><strong>Contacts → Actions → Apply Elks Mapping</strong>:
-        runs a server action that applies the mapping helpers on the selected records.
-        If nothing is selected, it processes all contacts that have Elks data populated.</li>
-    </ul>
-    <p class="oe_mt16">
-      You can run it anytime after an import to refresh native fields or to re-normalize edits.
-    </p>
-  </div>
-</section>
-
 <section class="oe_container oe_dark">
   <div class="oe_row oe_spaced">
-    <h3 class="oe_title">Fields added (high level)</h3>
+    <h3 class="oe_title">Plays well with other Elks modules</h3>
     <p>
-      Numerous <code>x_detail_* </code> fields for member, name, address, phones, dues and household;
-      local helper flags (<code>x_local_*</code>); officer role and computed flags.
-      Native fields are updated via helper methods—no separate model is introduced.
+      <strong>elksfrs</strong> (Financial Reporting System) hooks into the dues fields
+      and adds the Pay Dues workflow. <strong>elkssecretary</strong> uses the CLMS Status
+      to drive the Secretary's queue. <strong>elksattendance</strong>,
+      <strong>elksmaintenance</strong>, <strong>elkscharity</strong>,
+      <strong>elksrvparking</strong>, and <strong>elkspurchase</strong> all reference the
+      role groups defined here. Install elkscontacts alone for a directory; layer the
+      others on as needed.
     </p>
   </div>
 </section>
@@ -86,9 +158,15 @@
     <h3 class="oe_title">Setup</h3>
     <ol>
       <li>Install this module from Apps.</li>
-      <li>Import your member file via <strong>Contacts &rarr; Favorites &rarr; Import</strong>.
-        Ensure the column headers map to the provided <code>x_detail_*</code> fields.</li>
-      <li>After import, run <strong>Contacts → Actions → Apply Elks Mapping</strong>.</li>
+      <li>On the User form &rarr; Access Rights tab, assign the right
+        <strong>Elks Lodge</strong> level to each user (Member / Officer /
+        Secretary / Manager).</li>
+      <li>Import your member file via <strong>Contacts &rarr; Favorites &rarr;
+        Import</strong>. Map your column headers to the provided
+        <code>x_detail_*</code> fields.</li>
+      <li>After import, run <strong>Contacts &rarr; Actions &rarr; Apply Elks
+        Mapping</strong> to refresh the native Odoo fields (name, address,
+        phone) from the imported CLMS data.</li>
     </ol>
   </div>
 </section>
@@ -96,7 +174,11 @@
 <section class="oe_container oe_dark">
   <div class="oe_row oe_spaced">
     <h3 class="oe_title">Compatibility</h3>
-    <p>Odoo 18.0 (Community &amp; Enterprise). License: LGPL-3.</p>
+    <p>
+      Odoo 19.0 (Community &amp; Enterprise). Depends on the standard <code>contacts</code>,
+      <code>hr</code>, <code>hr_skills</code>, <code>mail</code>, and <code>website</code>
+      modules. License: LGPL-3.
+    </p>
   </div>
 </section>
 
@@ -104,7 +186,9 @@
   <div class="oe_row oe_spaced">
     <h3 class="oe_title">Support</h3>
     <p>
-      Issues or questions? Open a ticket in your repo or contact the maintainer.
+      Issues, feature requests, or lodge-specific customization: open a ticket in your
+      repo or contact the maintainer at
+      <a href="https://dannysantiago.info">dannysantiago.info</a>.
     </p>
   </div>
 </section>

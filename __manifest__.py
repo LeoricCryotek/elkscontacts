@@ -1,6 +1,6 @@
 {
     "name": "Elks Contacts",
-    "version": "19.0.3.8",
+    "version": "19.0.4.0",
     "category": "Contacts",
     "summary": "Manage Elks Member Contact Information",
     "author": "Danny Santiago",
@@ -8,6 +8,7 @@
     "license": "LGPL-3",
     "depends": ["base", "base_import", "contacts", "hr", "hr_skills", "mail", "website"],
     "data": [
+        "security/elks_groups.xml",
         "security/ir.model.access.csv",
         "wizard/ballot_wizard_views.xml",
         "wizard/employee_merge_wizard_views.xml",
