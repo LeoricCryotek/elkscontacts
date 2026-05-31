@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         #10 Envelope print (9.5" x 4.125")
+
+         Bound to res.partner with binding_type=report so it shows up
+         in the standard Print menu (gear icon) on the Contacts form
+         AND in the Contacts list view's Print action.
+
+         BULK: select any number of contacts in the list view, click
+         Actions / Print -> "Envelope (#10)", and Odoo will generate
+         ONE multi-page PDF with one envelope per page.
+         ═══════════════════════════════════════════════════════════ -->
+
+    <!-- Custom paperformat: 241mm x 105mm landscape  (9.5" x 4.125") -->
+    <record id="paperformat_envelope_10" model="report.paperformat">
+        <field name="name">#10 Envelope (9.5 x 4.125)</field>
+        <field name="format">custom</field>
+        <field name="page_width">241</field>
+        <field name="page_height">105</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">3</field>
+        <field name="margin_bottom">3</field>
+        <field name="margin_left">3</field>
+        <field name="margin_right">3</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">300</field>
+    </record>
+
+    <record id="action_report_partner_envelope" model="ir.actions.report">
+        <field name="name">Envelope (#10)</field>
+        <field name="model">res.partner</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">elkscontacts.report_partner_envelope</field>
+        <field name="report_file">elkscontacts.report_partner_envelope</field>
+        <field name="binding_model_id" ref="base.model_res_partner"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_envelope_10"/>
+        <field name="print_report_name">
+            'Envelope_' + ((object.name or 'contact').replace(' ', '_'))
+        </field>
+    </record>
+
+    <template id="report_partner_envelope">
+        <t t-call="web.html_container">
+            <t t-set="settings"
+               t-value="env['elks.lodge.settings'].sudo().search([], limit=1)"/>
+
+            <t t-foreach="docs" t-as="partner">
+                <!-- One envelope per page (class="page" forces page break). -->
+                <div class="page"
+                     style="position: relative;
+                            font-family: Arial, Helvetica, sans-serif;
+                            color: #000;
+                            font-size: 11pt;
+                            margin: 0; padding: 0;">
+
+                    <!-- ===== Return address (top-left) ===== -->
+                    <div style="position: absolute; top: 0.30in; left: 0.40in;">
+                        <table style="border-collapse: collapse; border: none;">
+                            <tr>
+                                <t t-set="ret_logo"
+                                   t-value="(settings and (settings.logo_primary or settings.logo_lodge)) or False"/>
+                                <t t-if="ret_logo">
+                                    <td style="vertical-align: top;
+                                               padding: 0 10px 0 0;
+                                               border: none;">
+                                        <img t-att-src="image_data_uri(ret_logo)"
+                                             style="height: 0.7in; width: auto;
+                                                    display: block;"
+                                             alt="Lodge"/>
+                                    </td>
+                                </t>
+                                <td style="vertical-align: top;
+                                           line-height: 1.25;
+                                           border: none;">
+                                    <div style="font-weight: bold;
+                                                font-size: 12pt;">
+                                        <t t-if="settings and settings.name">
+                                            <span t-field="settings.name"/></t>
+                                        <t t-if="settings and settings.lodge_number"> #<span t-field="settings.lodge_number"/></t>
+                                    </div>
+                                    <t t-if="settings and settings.lodge_address">
+                                        <div style="font-size: 9.5pt;
+                                                    color: #444;">
+                                            <span t-field="settings.lodge_address"/>
+                                        </div>
+                                    </t>
+                                    <div style="font-size: 9.5pt; color: #444;">
+                                        <t t-if="settings and settings.lodge_city"><span t-field="settings.lodge_city"/></t><t t-if="settings and settings.lodge_city and (settings.lodge_state or settings.lodge_zip)">, </t><t t-if="settings and settings.lodge_state"><span t-esc="settings.lodge_state"/></t><t t-if="settings and settings.lodge_zip"> <span t-field="settings.lodge_zip"/></t>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- ===== Recipient address ===== -->
+                    <!-- Positioned per USPS guidance: left edge ~4.5in,
+                         top ~1.75in, bottom 5/8" kept clear for barcoding. -->
+                    <div style="position: absolute;
+                                top: 1.75in; left: 4.50in;
+                                font-size: 11.5pt;
+                                line-height: 1.35;">
+                        <div style="font-weight: 600;">
+                            <span t-field="partner.name"/>
+                        </div>
+                        <t t-if="partner.parent_id and partner.parent_id.name != partner.name">
+                            <div><span t-field="partner.parent_id.name"/></div>
+                        </t>
+                        <t t-if="partner.street">
+                            <div><span t-field="partner.street"/></div>
+                        </t>
+                        <t t-if="partner.street2">
+                            <div><span t-field="partner.street2"/></div>
+                        </t>
+                        <div>
+                            <t t-if="partner.city"><span t-field="partner.city"/></t><t t-if="partner.city and (partner.state_id or partner.zip)">, </t><t t-if="partner.state_id"><span t-esc="partner.state_id.code or partner.state_id.name"/></t><t t-if="partner.zip">  <span t-field="partner.zip"/></t>
+                        </div>
+                        <t t-if="partner.country_id and partner.country_id.code != 'US'">
+                            <div><span t-field="partner.country_id.name"/></div>
+                        </t>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

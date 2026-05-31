@@ -18,7 +18,7 @@
                 </group>
                 <div invisible="state != 'done'">
                     <h3>
-                        <i class="fa fa-check-circle text-success"/> Import Results
+                        <i class="fa fa-check-circle text-success" title="Done"/> Import Results
                     </h3>
                     <field name="result_message" readonly="True"
                            widget="text" nolabel="1"

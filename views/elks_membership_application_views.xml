@@ -64,10 +64,31 @@
                     </group>
                     <group>
                         <group string="Proposer">
-                            <field name="proposer_id"/>
-                            <field name="proposer_member_num" readonly="1"/>
-                            <field name="proposer_lodge_num" readonly="1"/>
-                            <field name="endorser_id"/>
+                            <field name="proposer_from_another_lodge"/>
+                            <!-- Local-lodge proposer (default) -->
+                            <field name="proposer_id"
+                                   invisible="proposer_from_another_lodge"
+                                   required="not proposer_from_another_lodge"/>
+                            <field name="proposer_member_num" readonly="1"
+                                   invisible="proposer_from_another_lodge"/>
+                            <field name="proposer_lodge_num" readonly="1"
+                                   invisible="proposer_from_another_lodge"/>
+                            <!-- External-lodge proposer -->
+                            <field name="proposer_external_name"
+                                   invisible="not proposer_from_another_lodge"
+                                   required="proposer_from_another_lodge"/>
+                            <field name="proposer_external_member_num"
+                                   invisible="not proposer_from_another_lodge"/>
+                            <field name="proposer_external_lodge_name"
+                                   invisible="not proposer_from_another_lodge"/>
+                            <field name="proposer_external_lodge_num"
+                                   invisible="not proposer_from_another_lodge"/>
+                            <field name="proposer_external_lodge_state_id"
+                                   invisible="not proposer_from_another_lodge"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <!-- Common -->
+                            <field name="endorser_id"
+                                   invisible="proposer_from_another_lodge"/>
                             <field name="date_proposed"/>
                             <field name="date_read_onto_floor"/>
                             <field name="lodge_year" readonly="1"/>
@@ -279,7 +300,9 @@
                 <field name="dimit_type" optional="hide"/>
                 <field name="date_proposed"/>
                 <field name="applicant_display_name"/>
-                <field name="proposer_id"/>
+                <field name="proposer_display" string="Proposed By"/>
+                <field name="proposer_id" optional="hide"/>
+                <field name="proposer_from_another_lodge" optional="hide"/>
                 <field name="stage" widget="badge" decoration-info="stage == 'proposed'"
                        decoration-warning="stage == 'investigation'"
                        decoration-primary="stage == 'balloting'"

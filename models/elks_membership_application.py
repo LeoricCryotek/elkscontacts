@@ -256,13 +256,22 @@ class ElksMembershipApplication(models.Model):
     applicant_military_discharge_date = fields.Date("Discharge Date")
 
     # ------------------------------------------------------------------
-    # Proposer (must be an existing Elks member)
+    # Proposer (must be an Elks member — local lodge or another lodge)
     # ------------------------------------------------------------------
+    proposer_from_another_lodge = fields.Boolean(
+        "Proposer is from Another Lodge",
+        tracking=True,
+        help="Check if the proposing member belongs to a different Elks "
+             "lodge (not this lodge). Enables free-text fields below to "
+             "record the proposer's name, member number, and home lodge.",
+    )
     proposer_id = fields.Many2one(
-        'res.partner', string="Proposed By", required=True,
+        'res.partner', string="Proposed By",
         domain="[('x_is_member', '=', True)]",
         tracking=True,
-        help="The Elks member who is proposing this applicant.",
+        help="The local Elks member proposing this applicant. "
+             "Leave empty and use the external proposer fields if the "
+             "proposer is from another lodge.",
     )
     proposer_member_num = fields.Char(
         related='proposer_id.x_detail_member_num',
@@ -272,6 +281,82 @@ class ElksMembershipApplication(models.Model):
         related='proposer_id.x_detail_lodge_num',
         string="Proposer Lodge #", store=True,
     )
+
+    # External (out-of-lodge) proposer details
+    proposer_external_name = fields.Char(
+        "External Proposer Name",
+        tracking=True,
+        help="Full name of the proposing member from the other lodge.",
+    )
+    proposer_external_member_num = fields.Char(
+        "External Proposer Member #",
+        help="Membership number of the proposer at their home lodge.",
+    )
+    proposer_external_lodge_name = fields.Char(
+        "External Proposer Lodge Name",
+        help="Name of the proposer's home lodge (e.g. 'Coeur d'Alene').",
+    )
+    proposer_external_lodge_num = fields.Char(
+        "External Proposer Lodge #",
+        help="Lodge number of the proposer's home lodge (e.g. '1254').",
+    )
+    proposer_external_lodge_state_id = fields.Many2one(
+        'res.country.state', string="External Proposer Lodge State",
+        domain="[('country_id.code', '=', 'US')]",
+        help="State of the proposer's home lodge.",
+    )
+
+    # Display helper used by reports / chatter
+    proposer_display = fields.Char(
+        "Proposer (Display)",
+        compute='_compute_proposer_display', store=True,
+        help="Computed proposer label — local member name or external "
+             "proposer 'Name (Lodge #XXX)'.",
+    )
+
+    @api.depends(
+        'proposer_from_another_lodge', 'proposer_id',
+        'proposer_external_name', 'proposer_external_lodge_name',
+        'proposer_external_lodge_num',
+    )
+    def _compute_proposer_display(self):
+        for rec in self:
+            if rec.proposer_from_another_lodge:
+                bits = []
+                if rec.proposer_external_name:
+                    bits.append(rec.proposer_external_name)
+                lodge_bits = []
+                if rec.proposer_external_lodge_name:
+                    lodge_bits.append(rec.proposer_external_lodge_name)
+                if rec.proposer_external_lodge_num:
+                    lodge_bits.append(f"#{rec.proposer_external_lodge_num}")
+                if lodge_bits:
+                    bits.append(f"({' '.join(lodge_bits)})")
+                rec.proposer_display = ' '.join(bits) if bits else ''
+            elif rec.proposer_id:
+                rec.proposer_display = rec.proposer_id.name or ''
+            else:
+                rec.proposer_display = ''
+
+    @api.constrains(
+        'proposer_from_another_lodge', 'proposer_id',
+        'proposer_external_name',
+    )
+    def _check_proposer_present(self):
+        for rec in self:
+            if rec.proposer_from_another_lodge:
+                if not rec.proposer_external_name:
+                    raise ValidationError(_(
+                        "Please enter the External Proposer's name when the "
+                        "proposer is from another lodge."
+                    ))
+            else:
+                if not rec.proposer_id:
+                    raise ValidationError(_(
+                        "A proposer is required. Either select a local member "
+                        "or check 'Proposer is from Another Lodge' and fill "
+                        "in their information."
+                    ))
 
     # Second reference / endorser (optional)
     endorser_id = fields.Many2one(
@@ -341,6 +426,23 @@ class ElksMembershipApplication(models.Model):
                 rec.q_never_convicted_felony,
                 rec.q_bona_fide_resident,
             ])
+
+    @api.onchange('proposer_from_another_lodge')
+    def _onchange_proposer_from_another_lodge(self):
+        """Clear the opposite side's fields when the toggle flips, so
+        stale data isn't left behind on either branch."""
+        for rec in self:
+            if rec.proposer_from_another_lodge:
+                # Switching to external — clear local member pick
+                rec.proposer_id = False
+                rec.endorser_id = False
+            else:
+                # Switching back to local — clear external entry fields
+                rec.proposer_external_name = False
+                rec.proposer_external_member_num = False
+                rec.proposer_external_lodge_name = False
+                rec.proposer_external_lodge_num = False
+                rec.proposer_external_lodge_state_id = False
 
     @api.onchange('application_type')
     def _onchange_application_type_attestations(self):
@@ -784,7 +886,7 @@ class ElksMembershipApplication(models.Model):
                         "From membership application: %(ref)s<br/>"
                         "Proposed by: %(proposer)s",
                         ref=rec.name,
-                        proposer=rec.proposer_id.name if rec.proposer_id else 'N/A',
+                        proposer=rec.proposer_display or 'N/A',
                     ),
                     message_type='comment', subtype_xmlid='mail.mt_note',
                 )
@@ -795,7 +897,7 @@ class ElksMembershipApplication(models.Model):
                     "Proposed by: %(proposer)s<br/>"
                     "Date: %(date)s",
                     name=rec.applicant_display_name,
-                    proposer=rec.proposer_id.name,
+                    proposer=rec.proposer_display or 'N/A',
                     date=rec.date_proposed,
                 ),
                 message_type='comment', subtype_xmlid='mail.mt_note',
@@ -848,16 +950,16 @@ class ElksMembershipApplication(models.Model):
                 vals['comment_1'] = app_type_map.get(
                     rec.application_type, rec.application_type or '',
                 )
-                if rec.proposer_id:
-                    vals['comment_2'] = rec.proposer_id.name
+                if rec.proposer_display:
+                    vals['comment_2'] = rec.proposer_display
             elif event_type == 'investigated':
                 if rec.investigator_id:
                     vals['comment_1'] = rec.investigator_id.name
             elif event_type == 'elected':
                 pass
             elif event_type == 'initiated':
-                if rec.proposer_id:
-                    vals['comment_1'] = rec.proposer_id.name
+                if rec.proposer_display:
+                    vals['comment_1'] = rec.proposer_display
                 if rec.endorser_id:
                     vals['comment_2'] = rec.endorser_id.name
                 vals['chg'] = '+1'
@@ -1072,6 +1174,65 @@ class ElksMembershipApplication(models.Model):
                 message_type='comment', subtype_xmlid='mail.mt_note',
             )
 
+    # ------------------------------------------------------------------
+    # CLMS defaults at initiation — populate "who was ER / Secretary
+    # when this person became a member", "what was the original init
+    # lodge", "what rate code do they start on".
+    # ------------------------------------------------------------------
+    def _get_current_officer_name(self, position_key):
+        """Return the display name of the partner currently holding
+        the given officer position for the current lodge year, or ''
+        if nobody is assigned."""
+        today = fields.Date.context_today(self)
+        if today.month >= 4:
+            year_str = f"{today.year}-{today.year + 1}"
+        else:
+            year_str = f"{today.year - 1}-{today.year}"
+        term = self.env['elks.officer.term'].search([
+            ('position', '=', position_key),
+            ('lodge_year', '=', year_str),
+            ('active', '=', True),
+        ], limit=1)
+        return term.partner_id.name if term and term.partner_id else ''
+
+    def _build_initiation_clms_defaults(self):
+        """Return dict of CLMS-tab defaults to set on a partner at
+        initiation time: original init lodge, the ER and Secretary at
+        time of initiation, dues rate code, dues pay cycle."""
+        self.ensure_one()
+        settings = self.env['elks.lodge.settings'].sudo().search([], limit=1)
+        vals = {}
+
+        # Original Init Lodge — formatted like CLMS: "Lewiston, ID No. 896"
+        if settings:
+            parts = []
+            if settings.name:
+                parts.append(settings.name)
+            location = settings.lodge_state or ''
+            if location:
+                parts.append(location)
+            lodge_str = ', '.join(parts)
+            if settings.lodge_number:
+                lodge_str = (lodge_str + ' No. ' + settings.lodge_number).strip()
+            if lodge_str:
+                vals['x_original_init_lodge_name'] = lodge_str
+            if settings.lodge_number:
+                vals['x_original_init_lodge_num'] = settings.lodge_number
+
+        # Initiating officers — current Exalted Ruler and Secretary
+        er_name = self._get_current_officer_name('exalted_ruler')
+        if er_name:
+            vals['x_initiating_exalted_ruler'] = er_name
+        sec_name = self._get_current_officer_name('secretary')
+        if sec_name:
+            vals['x_initiating_secretary'] = sec_name
+
+        # Dues defaults — start every new member on Regular / April Pay
+        vals.setdefault('x_dues_rate_code', 'R1')
+        vals.setdefault('x_dues_pay_cycle', 'april')
+
+        return vals
+
     def action_initiate(self):
         """Initiate the elected applicant — create or update the member contact.
 
@@ -1095,6 +1256,8 @@ class ElksMembershipApplication(models.Model):
                 partner_vals['x_is_not_member'] = False  # makes x_is_member = True
                 if rec.member_number_assigned:
                     partner_vals['x_detail_member_num'] = rec.member_number_assigned
+                # CLMS defaults at initiation (same as the update branch)
+                partner_vals.update(rec._build_initiation_clms_defaults())
                 partner = self.env['res.partner'].with_context(
                     elks_overwrite=False,
                 ).create(partner_vals)
@@ -1153,6 +1316,15 @@ class ElksMembershipApplication(models.Model):
                     update_vals['state_id'] = rec.applicant_state_id.id
                 if rec.applicant_zip and not partner.zip:
                     update_vals['zip'] = rec.applicant_zip
+
+                # CLMS defaults at initiation — fill in original init
+                # lodge, ER/Secretary at time of initiation, dues rate,
+                # dues pay cycle. Only set if the partner doesn't
+                # already have them (so editing later survives).
+                for k, v in rec._build_initiation_clms_defaults().items():
+                    if not partner[k]:
+                        update_vals[k] = v
+
                 partner.write(update_vals)
 
             # Write key membership dates to the contact (always set, not fill-blank)
@@ -1207,7 +1379,7 @@ class ElksMembershipApplication(models.Model):
                     "Date Initiated: %(date)s<br/>"
                     "Dues Paid Through: %(paid_to)s",
                     ref=rec.name,
-                    proposer=rec.proposer_id.name,
+                    proposer=rec.proposer_display or 'N/A',
                     date=rec.date_initiated,
                     paid_to=new_paid_to,
                 ),

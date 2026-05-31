@@ -1,0 +1,534 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         CLMS-mirroring notebook on the partner form.
+
+         Adds a new top-level page "CLMS Record" containing a nested
+         notebook with 13 sub-tabs that mirror the CLMS member screens
+         the secretary uses every day:
+            Contact · ALT Info · Spouse/Emergency · History · Roles ·
+            Committees · Auxiliaries · Misc · Payments · Custom ·
+            Remarks · Flags · Secy Contact Info
+
+         All existing data stays where it was — none of the existing
+         fields are moved or removed; we just surface them in the
+         CLMS-style notebook for the secretary's daily workflow.
+         ═══════════════════════════════════════════════════════════════ -->
+
+    <record id="view_partner_form_clms_notebook" model="ir.ui.view">
+        <field name="name">res.partner.form.clms.notebook</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="priority" eval="40"/>
+        <field name="arch" type="xml">
+
+            <!-- Inject the CLMS notebook as the FIRST page in the
+                 partner form's notebook. position="before" on the
+                 first existing <page> child places this new page
+                 leftmost so secretaries land on the CLMS view first,
+                 matching how they work in CLMS itself. -->
+            <xpath expr="//notebook/page[1]" position="before">
+                <page string="CLMS Record" name="clms_record">
+
+                    <notebook>
+
+                        <!-- ─────────────────────────────── -->
+                        <!--  1. Contact                      -->
+                        <!-- ─────────────────────────────── -->
+                        <page string="Contact" name="clms_contact">
+                            <group>
+                                <group string="Lodge / Member">
+                                    <field name="x_detail_lodge_num"/>
+                                    <field name="x_detail_member_num"/>
+                                    <field name="x_detail_dues_paid_to_date"/>
+                                    <field name="x_age" readonly="1"/>
+                                    <field name="x_date_initiated"/>
+                                    <field name="x_member_years" readonly="1"/>
+                                    <field name="x_lost_years"/>
+                                </group>
+                                <group string="Name">
+                                    <field name="x_detail_name_prefix"/>
+                                    <field name="x_detail_first_name"/>
+                                    <field name="x_detail_middle_name"/>
+                                    <field name="x_detail_last_name"/>
+                                    <field name="x_detail_generational_suffix"/>
+                                    <field name="x_detail_professional_suffix"/>
+                                    <field name="x_detail_military_suffix"/>
+                                    <field name="x_detail_sex"/>
+                                    <field name="x_detail_nickname"/>
+                                    <field name="x_detail_elk_title"/>
+                                </group>
+                            </group>
+                            <group string="Active Address">
+                                <group>
+                                    <field name="street" string="Address 1"/>
+                                    <field name="street2" string="Address 2"/>
+                                    <field name="city"/>
+                                    <field name="state_id"/>
+                                    <field name="zip"/>
+                                    <field name="country_id"/>
+                                </group>
+                                <group string="CASS">
+                                    <field name="x_detail_active_carrier_code"
+                                           string="Carrier Route"/>
+                                    <field name="x_detail_active_dpc"
+                                           string="DPC"/>
+                                    <field name="x_detail_active_postal_lot"
+                                           string="LOT"/>
+                                    <field name="x_detail_active_cass_result_code"
+                                           string="Result"/>
+                                    <field name="x_detail_active_is_undeliverable"
+                                           string="Undeliverable"/>
+                                    <field name="x_detail_active_send_no_mail"
+                                           string="Send No Mail"/>
+                                </group>
+                            </group>
+                            <group string="Phones">
+                                <group>
+                                    <label for="x_detail_home_phone"/>
+                                    <div>
+                                        <field name="x_detail_home_area_code"
+                                               class="oe_inline"
+                                               placeholder="208"/>
+                                        <field name="x_detail_home_phone"
+                                               class="oe_inline"
+                                               placeholder="555-1234"/>
+                                        <field name="x_detail_home_phone_ext"
+                                               class="oe_inline"
+                                               placeholder="ext"/>
+                                    </div>
+                                    <label for="x_detail_work_phone"/>
+                                    <div>
+                                        <field name="x_detail_work_area_code"
+                                               class="oe_inline"/>
+                                        <field name="x_detail_work_phone"
+                                               class="oe_inline"/>
+                                        <field name="x_detail_work_phone_ext"
+                                               class="oe_inline"/>
+                                    </div>
+                                </group>
+                                <group>
+                                    <label for="x_detail_cell_phone"/>
+                                    <div>
+                                        <field name="x_detail_cell_area_code"
+                                               class="oe_inline"/>
+                                        <field name="x_detail_cell_phone"
+                                               class="oe_inline"/>
+                                    </div>
+                                    <label for="x_detail_fax_phone"/>
+                                    <div>
+                                        <field name="x_detail_fax_area_code"
+                                               class="oe_inline"/>
+                                        <field name="x_detail_fax_phone"
+                                               class="oe_inline"/>
+                                    </div>
+                                </group>
+                            </group>
+                            <group string="Email &amp; Online">
+                                <group>
+                                    <field name="x_detail_email_address"
+                                           widget="email"/>
+                                    <field name="x_email_is_undeliverable"/>
+                                    <field name="x_elks_org_account"/>
+                                </group>
+                                <group string="Notice Preferences">
+                                    <field name="x_enotices_ok"
+                                           string="Lodge eNotices OK"/>
+                                    <field name="x_gl_enotices_ok"/>
+                                    <field name="x_elks_magazine_online"/>
+                                    <field name="x_newsletter_preference"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ─────────────────────────────── -->
+                        <!--  2. ALT Info                     -->
+                        <!-- ─────────────────────────────── -->
+                        <page string="ALT Info" name="clms_alt_info">
+                            <group string="Alternate Address">
+                                <group>
+                                    <field name="x_alt_street"
+                                           string="Address 1"/>
+                                    <field name="x_alt_street2"
+                                           string="Address 2"/>
+                                    <field name="x_alt_city"/>
+                                    <field name="x_alt_state_id"/>
+                                    <field name="x_alt_zip"/>
+                                    <field name="x_alt_country_id"/>
+                                </group>
+                                <group string="CASS &amp; Mail Flags">
+                                    <field name="x_alt_carrier_code"/>
+                                    <field name="x_alt_dpc"/>
+                                    <field name="x_alt_postal_lot"/>
+                                    <field name="x_alt_cass_result_code"/>
+                                    <field name="x_alt_is_undeliverable"/>
+                                    <field name="x_alt_send_no_magazine"/>
+                                    <field name="x_alt_send_no_mail"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ─────────────────────────────── -->
+                        <!--  3. Spouse / Emergency           -->
+                        <!-- ─────────────────────────────── -->
+                        <page string="Spouse / Emergency"
+                              name="clms_spouse_emergency">
+                            <group string="Spouse">
+                                <group>
+                                    <field name="x_detail_spouse_first_name"/>
+                                    <field name="x_detail_spouse_last_name"/>
+                                    <field name="x_spouse_has_id_card"/>
+                                </group>
+                                <group>
+                                    <field name="x_spouse_birthday"/>
+                                    <field name="x_anniversary_date"/>
+                                </group>
+                            </group>
+                            <group string="In Case of Emergency">
+                                <group>
+                                    <field name="x_emergency_contact_name"/>
+                                    <field name="x_emergency_relationship"/>
+                                    <field name="x_emergency_phone"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ─────────────────────────────── -->
+                        <!--  4. History                      -->
+                        <!-- ─────────────────────────────── -->
+                        <page string="History" name="clms_history">
+                            <group>
+                                <group string="Personal History">
+                                    <field name="x_date_of_birth"/>
+                                    <field name="x_date_of_death"/>
+                                </group>
+                                <group string="Membership Dates">
+                                    <field name="x_date_proposed"/>
+                                    <field name="x_date_elected"/>
+                                    <field name="x_date_initiated"/>
+                                </group>
+                            </group>
+                            <separator string="Elk History"/>
+                            <field name="x_member_history_ids"
+                                   nolabel="1" mode="list"/>
+                        </page>
+
+                        <!-- ─────────────────────────────── -->
+                        <!--  5. Roles                        -->
+                        <!-- ─────────────────────────────── -->
+                        <page string="Roles" name="clms_roles">
+                            <group string="Current and Past Offices &amp; Honors">
+                                <group>
+                                    <field name="x_is_elks_officer"
+                                           string="Officer"
+                                           readonly="1"/>
+                                    <field name="x_elks_officer_position"
+                                           string="Current Position"
+                                           readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="x_detail_per_start_year"
+                                           string="PER Year"/>
+                                    <field name="x_years_as_per"
+                                           string="Years as PER"
+                                           readonly="1"/>
+                                    <field name="x_detail_pdd_start_year"
+                                           string="PDD Year"/>
+                                    <field name="x_years_as_pdd"
+                                           string="Years as PDD"
+                                           readonly="1"/>
+                                    <field name="x_detail_poy_start_year"
+                                           string="POY Year"/>
+                                    <field name="x_years_as_poy"
+                                           string="Years as POY"
+                                           readonly="1"/>
+                                    <field name="x_detail_pey_start_year"
+                                           string="PEY Year"/>
+                                    <field name="x_years_as_pey"
+                                           string="Years as PEY"
+                                           readonly="1"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Lodge Status">
+                                    <field name="x_is_honorary_life_member"/>
+                                    <field name="x_last_hon_life_date"
+                                           string="HLM Date"/>
+                                    <field name="x_is_life_member"/>
+                                    <field name="x_last_life_date"
+                                           string="LM Date"/>
+                                    <field name="x_is_life_eligible"/>
+                                    <field name="x_is_charter_member"/>
+                                    <field name="x_is_assisted"/>
+                                    <field name="x_dues_pay_cycle"/>
+                                    <field name="x_is_rejected"/>
+                                </group>
+                                <group string="Donor Programs">
+                                    <field name="x_is_enf_donor"/>
+                                    <field name="x_enf_donor_id"/>
+                                    <field name="x_is_smp_donor"/>
+                                </group>
+                            </group>
+                            <group string="Veteran Status">
+                                <group>
+                                    <field name="x_is_veteran"/>
+                                    <field name="x_branch_of_service"/>
+                                    <field name="x_discharge_type"/>
+                                    <field name="x_discharge_date"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ─────────────────────────────── -->
+                        <!--  6. Committees                   -->
+                        <!-- ─────────────────────────────── -->
+                        <page string="Committees" name="clms_committees">
+                            <field name="x_committee_assignment_ids"
+                                   nolabel="1" mode="list"/>
+                        </page>
+
+                        <!-- ─────────────────────────────── -->
+                        <!--  7. Auxiliaries                  -->
+                        <!-- ─────────────────────────────── -->
+                        <page string="Auxiliaries" name="clms_auxiliaries">
+                            <field name="x_auxiliary_membership_ids"
+                                   nolabel="1" mode="list">
+                                <list editable="bottom">
+                                    <field name="auxiliary_id"/>
+                                    <field name="role"/>
+                                    <field name="date_joined"/>
+                                    <field name="date_left"/>
+                                    <field name="active" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- ─────────────────────────────── -->
+                        <!--  8. Misc                         -->
+                        <!-- ─────────────────────────────── -->
+                        <page string="Misc" name="clms_misc">
+                            <group>
+                                <group string="Background">
+                                    <field name="x_occupation"/>
+                                    <field name="x_employer"/>
+                                    <field name="x_birth_city"
+                                           string="Birthplace City"/>
+                                    <field name="x_birth_county"/>
+                                    <field name="x_birth_state_id"/>
+                                    <field name="x_birth_country_id"/>
+                                    <field name="x_maiden_name"/>
+                                </group>
+                                <group string="Original Initiation">
+                                    <field name="x_original_init_lodge_name"/>
+                                    <field name="x_original_init_lodge_num"/>
+                                    <field name="x_initiating_exalted_ruler"/>
+                                    <field name="x_initiating_secretary"/>
+                                </group>
+                            </group>
+                            <group string="Grand Lodge Identifiers">
+                                <group>
+                                    <field name="x_detail_memsysnamid"/>
+                                    <field name="x_enf_donor_id"/>
+                                </group>
+                                <group string="Dues Settings">
+                                    <field name="x_dues_rate_code"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ─────────────────────────────── -->
+                        <!--  9. Payments                     -->
+                        <!-- ─────────────────────────────── -->
+                        <page string="Payments" name="clms_payments">
+                            <p class="text-muted">
+                                Payment records are retained for seven
+                                years.  Use the Payments / Dues module
+                                to view and manage individual payments.
+                            </p>
+                            <!-- The elksfrs module injects the actual
+                                 x_dues_payment_ids list here via view
+                                 inheritance — see elksfrs view file. -->
+                        </page>
+
+                        <!-- ─────────────────────────────── -->
+                        <!-- 10. Custom                       -->
+                        <!-- ─────────────────────────────── -->
+                        <page string="Custom" name="clms_custom">
+                            <p class="text-muted">
+                                Custom fields defined for this member.
+                                Add free-form name/value pairs that
+                                mirror CLMS's Custom tab.
+                            </p>
+                            <field name="x_custom_field_ids"
+                                   nolabel="1" mode="list">
+                                <list editable="bottom">
+                                    <field name="field_name"/>
+                                    <field name="field_value"/>
+                                    <field name="notes" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- ─────────────────────────────── -->
+                        <!-- 11. Remarks                      -->
+                        <!-- ─────────────────────────────── -->
+                        <page string="Remarks" name="clms_remarks">
+                            <field name="x_remark_ids" nolabel="1" mode="list">
+                                <list editable="bottom">
+                                    <field name="remark_date"/>
+                                    <field name="author_id"/>
+                                    <field name="remark_text"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- ─────────────────────────────── -->
+                        <!-- 12. Flags                        -->
+                        <!-- ─────────────────────────────── -->
+                        <page string="Flags" name="clms_flags">
+                            <field name="x_reminder_flag_ids"
+                                   nolabel="1" mode="list">
+                                <list editable="bottom"
+                                      decoration-warning="flag_type == 'warning'"
+                                      decoration-info="flag_type == 'info'">
+                                    <field name="flag_type"/>
+                                    <field name="flag_date"/>
+                                    <field name="flag_text"/>
+                                    <field name="action_text"/>
+                                    <field name="active"
+                                           widget="boolean_toggle"
+                                           optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- ─────────────────────────────── -->
+                        <!-- 13. Secy Contact Info            -->
+                        <!-- ─────────────────────────────── -->
+                        <page string="Secy Contact Info"
+                              name="clms_secy_contact">
+                            <p class="text-muted">
+                                Information here is used for official
+                                Grand Lodge correspondence.
+                            </p>
+                            <group string="Grand Lodge Mailing Address">
+                                <group>
+                                    <field name="x_gl_mail_street"
+                                           string="Address 1"/>
+                                    <field name="x_gl_mail_street2"
+                                           string="Address 2"/>
+                                </group>
+                                <group>
+                                    <field name="x_gl_mail_city"/>
+                                    <field name="x_gl_mail_state_id"/>
+                                    <field name="x_gl_mail_zip"/>
+                                </group>
+                            </group>
+                            <group string="Grand Lodge Shipping Address (no P.O. Box)">
+                                <group>
+                                    <field name="x_gl_ship_street"
+                                           string="Address 1"/>
+                                    <field name="x_gl_ship_street2"
+                                           string="Address 2"/>
+                                </group>
+                                <group>
+                                    <field name="x_gl_ship_city"/>
+                                    <field name="x_gl_ship_state_id"/>
+                                    <field name="x_gl_ship_zip"/>
+                                </group>
+                            </group>
+                            <group string="Grand Lodge Contact Info">
+                                <group>
+                                    <field name="x_gl_home_phone"/>
+                                    <field name="x_gl_work_phone"/>
+                                    <field name="x_gl_cell_phone"/>
+                                    <field name="x_gl_fax"/>
+                                </group>
+                                <group>
+                                    <field name="x_gl_email" widget="email"/>
+                                    <field name="x_elks_org_email"
+                                           widget="email"/>
+                                </group>
+                            </group>
+                        </page>
+
+                    </notebook>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Hide tabs the lodge doesn't need on member contacts:
+           • Old "CLMS" tab — superseded by the new CLMS Record notebook
+             (its data is now under CLMS Record > Contact / Misc)
+           • Old "Elks History" tab — superseded by CLMS Record > History
+           • Standard Odoo Contacts, Sales & Purchase, Invoicing, and
+             Partner Assignment tabs — irrelevant for member contacts
+         ═══════════════════════════════════════════════════════════════ -->
+    <record id="view_partner_form_hide_commercial_tabs" model="ir.ui.view">
+        <field name="name">res.partner.form.hide.commercial.tabs</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="priority" eval="50"/>
+        <field name="arch" type="xml">
+
+            <!-- Old CLMS tab: superseded by the new CLMS Record notebook -->
+            <xpath expr="//page[@name='clms_tab']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Old Elks History tab: superseded by CLMS Record > History -->
+            <xpath expr="//page[@name='elks_history']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Standard Odoo Contacts page (child contacts list).
+                 Lodges don't use sub-contacts on members. -->
+            <xpath expr="//page[@name='contact_addresses']"
+                   position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Sales & Purchase — not used for member contacts. -->
+            <xpath expr="//page[@name='sales_purchases']"
+                   position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Hide Invoicing and Partner Assignment. We target the visible
+         `string=` rather than the variable `name=` attribute because
+         the string is stable across Odoo versions / installed modules.
+         Each is in its own view record so a missed xpath on one
+         doesn't block the other from loading. -->
+    <record id="view_partner_form_hide_invoicing" model="ir.ui.view">
+        <field name="name">res.partner.form.hide.invoicing</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="priority" eval="60"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@string='Invoicing']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_partner_form_hide_partner_assignment" model="ir.ui.view">
+        <field name="name">res.partner.form.hide.partner.assignment</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="priority" eval="61"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@string='Partner Assignment']"
+                   position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

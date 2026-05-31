@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- The alphabet bar itself -->
+    <t t-name="elkscontacts.ContactsAlphabetBar">
+        <div t-if="isContactsView" class="o_contacts_alphabet_bar">
+            <span class="o_caa_label">Last Name</span>
+            <div class="o_caa_btns">
+                <button class="o_caa_btn"
+                        t-att-class="{'active': state.active === 'All'}"
+                        t-on-click="() => this.onLetterClick('All')">
+                    All
+                </button>
+                <button t-foreach="letters" t-as="letter" t-key="letter"
+                        class="o_caa_btn"
+                        t-att-class="{'active': state.active === letter}"
+                        t-on-click="() => this.onLetterClick(letter)">
+                    <t t-esc="letter"/>
+                </button>
+            </div>
+        </div>
+    </t>
+
+    <!-- Extend the standard view Layout to render the bar between the
+         control panel and the view content. The Layout template owns
+         the `.o_content` element; injecting our component just before
+         it places the bar below the search bar and above the list. -->
+    <t t-name="elkscontacts.LayoutAlphabetBar"
+       t-inherit="web.Layout"
+       t-inherit-mode="extension">
+        <xpath expr="//*[hasclass('o_content')]" position="before">
+            <ContactsAlphabetBar/>
+        </xpath>
+    </t>
+
+</templates>

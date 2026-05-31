@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Hide standard res.partner fields the lodge doesn't use, and add
+         status ribbons (Dues Paid / Dues Overdue) to the member form. -->
+    <record id="view_partner_form_elks_cleanup" model="ir.ui.view">
+        <field name="name">res.partner.form.elks.cleanup</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="priority" eval="30"/>
+        <field name="arch" type="xml">
+
+            <!-- Hide Website field -->
+            <xpath expr="//field[@name='website']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Hide Tax ID (vat) field -->
+            <xpath expr="//field[@name='vat']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Status ribbons + the fields they depend on, placed
+                 INSIDE the sheet so the ribbon anchors to the sheet's
+                 upper-right corner (not the whole page — which on wide
+                 layouts puts the ribbon over the chatter column). -->
+            <xpath expr="//sheet" position="inside">
+                <field name="x_is_member" invisible="1"/>
+                <field name="x_is_dues_paid" invisible="1"/>
+                <widget name="web_ribbon"
+                        title="Dues Paid"
+                        bg_color="bg-success"
+                        invisible="not x_is_member or not x_is_dues_paid"/>
+                <widget name="web_ribbon"
+                        title="Dues Overdue"
+                        bg_color="bg-danger"
+                        invisible="not x_is_member or x_is_dues_paid"/>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

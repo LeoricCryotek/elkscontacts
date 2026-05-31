@@ -1,0 +1,4 @@
+DejaVu fonts are bundled here for server-portable rendering of the
+Officer Photo Poster (PIL has no guaranteed system font path on macOS).
+DejaVu Fonts License (public-domain-friendly, based on Bitstream Vera):
+https://dejavu-fonts.github.io/License.html

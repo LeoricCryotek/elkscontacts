@@ -109,6 +109,36 @@
                         invisible="not x_is_member">
                     <span>Drop Member</span>
                 </button>
+                <!--
+                    Death of Member - opens the same drop wizard pre-set
+                    to reason=deceased. The wizard's confirm action puts
+                    the record in x_death_clms_status='pending' and
+                    leaves the contact active (does NOT archive) so the
+                    Secretary can read the death on the lodge floor and
+                    push it to CLMS at Grand Lodge before archiving.
+                -->
+                <button name="action_open_death_wizard"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-pagelines"
+                        invisible="not x_is_member or x_drop_reason == 'deceased'">
+                    <span>Death of Member</span>
+                </button>
+                <!--
+                    When a death is pending CLMS entry, the smart button
+                    morphs into a status display so it's obvious from
+                    the contact card that the Secretary still owes work
+                    on this member.
+                -->
+                <button name="action_mark_death_processed_clms"
+                        type="object"
+                        class="oe_stat_button text-warning"
+                        icon="fa-clock-o"
+                        invisible="x_drop_reason != 'deceased' or x_death_clms_status != 'pending'"
+                        groups="elkscontacts.group_elks_secretary"
+                        help="Secretary only: mark this death as processed in CLMS at Grand Lodge. Archives the contact.">
+                    <span>Pending CLMS</span>
+                </button>
             </xpath>
         </field>
     </record>
@@ -195,6 +225,73 @@
                         </group>
                         <group string="Drop Notes">
                             <field name="x_drop_notes" string="" nolabel="1"/>
+                        </group>
+                    </group>
+
+                    <!--
+                        Death of Member - CLMS processing block.
+                        Visible only when this member is flagged deceased.
+                        Reception can click "Mark Read on Floor" once the
+                        announcement has been read at a meeting. Only the
+                        Secretary can click "Mark Processed in CLMS" -
+                        that action archives the contact.
+                    -->
+                    <group invisible="x_drop_reason != 'deceased'">
+                        <group string="Death of Member">
+                            <field name="x_date_of_death"/>
+                            <field name="x_date_read_on_floor"/>
+                            <field name="x_death_clms_status"
+                                   widget="badge"
+                                   decoration-warning="x_death_clms_status == 'pending'"
+                                   decoration-success="x_death_clms_status == 'processed'"/>
+                            <field name="x_death_clms_processed_date"
+                                   invisible="x_death_clms_status != 'processed'"/>
+                            <field name="x_death_clms_processed_by"
+                                   invisible="x_death_clms_status != 'processed'"/>
+                        </group>
+                        <group string="Secretary Actions">
+                            <div class="alert alert-info"
+                                 role="alert"
+                                 invisible="x_death_clms_status == 'processed'">
+                                <i class="fa fa-info-circle" title="Info"/>
+                                <b>Next steps for the Secretary:</b>
+                                <ol class="mb-0">
+                                    <li>Read the death announcement at
+                                        the next regular lodge meeting,
+                                        then click <b>Mark Read on Floor</b>.</li>
+                                    <li>Log into CLMS at Grand Lodge and
+                                        enter the death.</li>
+                                    <li>Come back here and click
+                                        <b>Mark Processed in CLMS</b> -
+                                        that step archives the contact.</li>
+                                </ol>
+                            </div>
+                            <div class="alert alert-success"
+                                 role="alert"
+                                 invisible="x_death_clms_status != 'processed'">
+                                <i class="fa fa-check-circle" title="Done"/>
+                                Death processed in CLMS. Member archived.
+                            </div>
+                            <button name="action_mark_read_on_floor"
+                                    string="Mark Read on Floor"
+                                    type="object"
+                                    class="btn-secondary"
+                                    icon="fa-volume-up"
+                                    invisible="x_death_clms_status == 'processed' or x_date_read_on_floor"/>
+                            <button name="action_mark_death_processed_clms"
+                                    string="Mark Processed in CLMS"
+                                    type="object"
+                                    class="btn-primary"
+                                    icon="fa-check"
+                                    groups="elkscontacts.group_elks_secretary"
+                                    invisible="x_death_clms_status == 'processed'"
+                                    confirm="This will archive the member from active rolls. Proceed?"/>
+                            <button name="action_unmark_death_processed_clms"
+                                    string="Reverse CLMS Processed"
+                                    type="object"
+                                    class="btn-link"
+                                    groups="elkscontacts.group_elks_secretary"
+                                    invisible="x_death_clms_status != 'processed'"/>
                         </group>
                     </group>
 

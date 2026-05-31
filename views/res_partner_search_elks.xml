@@ -6,6 +6,26 @@
             <!-- If your DB uses a different XML ID for the search view, swap this ref -->
             <field name="inherit_id" ref="base.view_res_partner_filter"/>
             <field name="arch" type="xml">
+                <!-- Default search box matches Name OR Member Number, so
+                     just typing and pressing Enter finds either. -->
+                <xpath expr="//field[@name='name']" position="attributes">
+                    <attribute name="string">Name or Member #</attribute>
+                    <attribute name="filter_domain">
+                        ['|', ('display_name', 'ilike', self),
+                              ('x_detail_member_num', '=ilike', self + '%')]
+                    </attribute>
+                </xpath>
+
+                <!-- Explicit Last Name / Member Number options in the
+                     typeahead dropdown for when the user wants to be
+                     specific. -->
+                <xpath expr="//field[@name='name']" position="after">
+                    <field name="x_detail_last_name" string="Last Name"
+                           filter_domain="[('x_detail_last_name', '=ilike', self + '%')]"/>
+                    <field name="x_detail_member_num" string="Member Number"
+                           filter_domain="[('x_detail_member_num', '=ilike', self + '%')]"/>
+                </xpath>
+
                 <xpath expr="//search" position="inside">
                     <separator string="Elks"/>
 
@@ -54,6 +74,17 @@
                             string="Return to Sender"
                             domain="[('x_return_to_sender','=',True)]"
                             help="Contacts flagged as Return to Sender (undeliverable mail)."/>
+
+                    <!-- A-Z sidebar: click a letter to filter contacts
+                         whose last name starts with it. Renders on the
+                         LEFT of the contacts list / kanban view. -->
+                    <searchpanel>
+                        <field name="x_last_name_letter"
+                               string="Last Name"
+                               icon="fa-sort-alpha-asc"
+                               select="one"
+                               enable_counters="1"/>
+                    </searchpanel>
                 </xpath>
             </field>
         </record>

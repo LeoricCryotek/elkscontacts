@@ -7,3 +7,195 @@
 .o_form_view .o_group {
     overflow: visible;
 }
+
+/* Officer Photo Poster preview: keep the large preview image scaled
+   to the dialog width instead of overflowing at its native size. */
+.opp_preview_img img {
+    max-width: 100% !important;
+    height: auto !important;
+    width: auto !important;
+    display: block;
+    border: 1px solid #ccc;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   Alphabet panel -> top bar (v5, using REAL DOM from DevTools).
+
+   Selectors fixed based on actual rendered HTML in Odoo 19:
+   • Container is <main class="o_content"> (not <div>)
+   • Unique panel identifier: i.fa-sort-alpha-asc inside the section
+     header (this icon is what we set in the searchpanel definition
+     and no other Odoo search panel uses it)
+   • List is <ul class="o_search_panel_field"> with <li> children
+   • Bootstrap utilities to override: h-100, pb-5, flex-grow-0,
+     flex-shrink-0 on the panel itself
+   ──────────────────────────────────────────────────────────────── */
+
+main.o_content:has(.o_search_panel .fa-sort-alpha-asc) {
+    flex-direction: column !important;
+}
+
+/* The panel becomes a full-width strip. Have to win against h-100,
+   pb-5, flex-grow-0, flex-shrink-0 from Bootstrap utilities. */
+main.o_content:has(.o_search_panel .fa-sort-alpha-asc) > .o_search_panel {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 6px 12px !important;
+    border-bottom: 1px solid #dee2e6 !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+}
+
+/* CRITICAL: every other child of o_content must fill remaining space
+   when in column mode. Without flex:1 + min-height:0 they collapse
+   to zero height (the v1 white-page bug). Also override h-100 on
+   the .h-100 spacer div. */
+main.o_content:has(.o_search_panel .fa-sort-alpha-asc) > :not(.o_search_panel) {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    width: 100% !important;
+}
+
+/* Hide Odoo's "collapse the search panel" toggle button — it only
+   makes sense for a sidebar layout, and clicking it in top-bar mode
+   hides the letters entirely. */
+main.o_content:has(.o_search_panel .fa-sort-alpha-asc)
+        > .o_search_panel > button {
+    display: none !important;
+}
+
+/* Don't let the empty .h-100 wrapper grow vertically. It was getting
+   flex:1 from the catchall rule above, splitting remaining space
+   evenly with the list and creating a tall empty gap above the rows
+   whenever the list had few results. */
+main.o_content:has(.o_search_panel .fa-sort-alpha-asc) > .h-100 {
+    flex: 0 0 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+}
+
+/* Section is one centered, single-line row — no wrapping. */
+main.o_content:has(.o_search_panel .fa-sort-alpha-asc) .o_search_panel_section {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    border: none !important;
+    white-space: nowrap !important;
+}
+
+main.o_content:has(.o_search_panel .fa-sort-alpha-asc)
+        .o_search_panel_section_header {
+    padding: 2px 0 !important;
+    margin: 0 6px 0 0 !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    border: none !important;
+    background: transparent !important;
+    color: #6c757d !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+}
+
+main.o_content:has(.o_search_panel .fa-sort-alpha-asc) .o_search_panel_field {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    flex: 0 1 auto !important;
+}
+
+/* Very compact letter chips. */
+main.o_content:has(.o_search_panel .fa-sort-alpha-asc)
+        .o_search_panel_field > li {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 1px 5px !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 3px !important;
+    background: transparent !important;
+    cursor: pointer !important;
+    list-style: none !important;
+    font-size: 12px !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+}
+
+/* ─── Responsive breakpoints ───────────────────────────────────── */
+
+/* Tablet / narrow desktop: tighter chips, smaller label. */
+@media (max-width: 1199.98px) {
+    main.o_content:has(.o_search_panel .fa-sort-alpha-asc)
+            .o_search_panel_field > li {
+        padding: 1px 4px !important;
+        font-size: 11px !important;
+    }
+    main.o_content:has(.o_search_panel .fa-sort-alpha-asc)
+            .o_search_panel_section_header {
+        font-size: 9px !important;
+        margin-right: 4px !important;
+    }
+}
+
+/* Smaller tablet: drop the LAST NAME label entirely. */
+@media (max-width: 991.98px) {
+    main.o_content:has(.o_search_panel .fa-sort-alpha-asc)
+            .o_search_panel_section_header {
+        display: none !important;
+    }
+}
+
+/* Phone: ultra-compact chips, allow horizontal scroll. */
+@media (max-width: 767.98px) {
+    main.o_content:has(.o_search_panel .fa-sort-alpha-asc)
+            > .o_search_panel {
+        padding: 4px 6px !important;
+    }
+    main.o_content:has(.o_search_panel .fa-sort-alpha-asc)
+            .o_search_panel_section {
+        justify-content: flex-start !important;
+    }
+    main.o_content:has(.o_search_panel .fa-sort-alpha-asc)
+            .o_search_panel_field > li {
+        padding: 1px 3px !important;
+        font-size: 11px !important;
+    }
+}
+
+/* Hide the per-letter counts — just want letters. */
+main.o_content:has(.o_search_panel .fa-sort-alpha-asc)
+        .o_search_panel_counter,
+main.o_content:has(.o_search_panel .fa-sort-alpha-asc)
+        .o_search_panel_field > li .badge {
+    display: none !important;
+}
+
+main.o_content:has(.o_search_panel .fa-sort-alpha-asc)
+        .o_search_panel_field > li:hover {
+    background: #f0f0f0 !important;
+}
+
+main.o_content:has(.o_search_panel .fa-sort-alpha-asc)
+        .o_search_panel_field > li.active,
+main.o_content:has(.o_search_panel .fa-sort-alpha-asc)
+        .o_search_panel_field > li > header.active {
+    background: #714B67 !important;
+    color: white !important;
+    border-color: #714B67 !important;
+}

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_elks_officer_poster_wizard_form" model="ir.ui.view">
+        <field name="name">elks.officer.poster.wizard.form</field>
+        <field name="model">elks.officer.poster.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Officer Photo Poster">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Officer Photo Poster</h1>
+                        <p>
+                            Builds a large-format photo board of the lodge
+                            officers for the selected year — Exalted Ruler
+                            front and center, Treasurer and Secretary
+                            flanking, then the Knights, the Trustees, and the
+                            remaining officers. Photos come from each Officer
+                            Term (falling back to the member's contact photo).
+                        </p>
+                    </div>
+
+                    <group invisible="state == 'done'">
+                        <group string="Poster">
+                            <field name="lodge_year"/>
+                            <field name="include_inactive"/>
+                        </group>
+                        <group string="Size &amp; Quality">
+                            <label for="width_in"/>
+                            <div class="o_row">
+                                <field name="width_in" class="oe_inline"/>
+                                <span>in  ×  </span>
+                                <field name="height_in" class="oe_inline"/>
+                                <span>in</span>
+                            </div>
+                            <field name="dpi"/>
+                        </group>
+                    </group>
+
+                    <div invisible="state != 'done'">
+                        <div class="alert alert-success" role="alert">
+                            Poster generated with
+                            <field name="officer_count" class="oe_inline" readonly="1"/>
+                            officer(s). Review the preview below, then download
+                            the PDF and send it to the print shop with the
+                            instructions provided.
+                        </div>
+                        <separator string="Preview"/>
+                        <field name="poster_preview" widget="image"
+                               nolabel="1" readonly="1"
+                               class="opp_preview_img"/>
+                        <group>
+                            <field name="poster_filename" invisible="1"/>
+                            <field name="poster_pdf" filename="poster_filename"
+                                   widget="binary" string="Download Poster PDF"/>
+                        </group>
+                        <separator string="Print Shop Instructions (copy into your order/email)"/>
+                        <field name="staples_instructions" nolabel="1"
+                               widget="text" readonly="1"
+                               style="font-family: monospace; white-space: pre;"/>
+                        <field name="state" invisible="1"/>
+                    </div>
+                    <field name="state" invisible="1"/>
+                </sheet>
+                <footer>
+                    <button name="action_generate" type="object"
+                            string="Generate Poster" class="btn-primary"
+                            invisible="state == 'done'"/>
+                    <button name="action_generate" type="object"
+                            string="Regenerate" class="btn-secondary"
+                            invisible="state != 'done'"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_elks_officer_poster_wizard" model="ir.actions.act_window">
+        <field name="name">Officer Photo Poster</field>
+        <field name="res_model">elks.officer.poster.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Menu under Contacts > Actions -->
+    <menuitem id="elks_menu_officer_poster"
+              name="Officer Photo Poster"
+              parent="elks_menu_actions"
+              action="action_elks_officer_poster_wizard"
+              sequence="22"/>
+
+</odoo>

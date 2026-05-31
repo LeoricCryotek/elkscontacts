@@ -8,3 +8,4 @@ from . import res_user
 from . import elks_member_history
 from . import elks_membership_application
 from . import base_import_flex
+from . import elks_member_clms_tabs

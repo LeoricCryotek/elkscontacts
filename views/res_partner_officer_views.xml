@@ -1,34 +1,7 @@
 <odoo>
-  <record id="view_partner_form_elks_row_after_address" model="ir.ui.view">
-    <field name="name">res.partner.form.elks.row.after.address</field>
-    <field name="model">res.partner</field>
-    <field name="inherit_id" ref="elkscontacts.view_partner_form_lodge_records"/>
-    <field name="priority" eval="25"/>
-    <field name="arch" type="xml">
-
-      <!-- Insert a new label+field row AFTER the entire Address box -->
-      <xpath expr="//div[hasclass('o_address_format')]" position="after">
-        <!-- make trigger available -->
-        <field name="x_is_not_member" invisible="1"/>
-
-        <!-- Left-side label (same style as Address/Company labels) -->
-        <span class="o_form_label o_td_label">Elks</span>
-
-        <!-- Right-side content box -->
-        <div class="o_td_field" invisible="x_is_not_member">
-          <div class="d-flex flex-wrap gap-2">
-            <field name="x_elks_officer_position" string="Current Officer Position"/>
-            <field name="x_elks_officer_type" readonly="1" string="Officer Type"/>
-            <field name="x_is_elks_officer" readonly="1" string="Is Officer"/>
-          </div>
-        </div>
-      </xpath>
-
-      <!-- Officer History tab removed — officer terms are managed
-           in the Elks History tab and via the standalone Officer Terms menu -->
-
-    </field>
-  </record>
+  <!-- Legacy "Elks: officer-position dropdown" form row removed.
+       Officer positions are driven by the Officer Terms model, which
+       auto-syncs x_elks_officer_position onto the contact record. -->
 
   <!-- ============================================================
        Standalone Officer Term views (for menu access)

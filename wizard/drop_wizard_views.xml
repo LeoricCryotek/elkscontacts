@@ -5,18 +5,42 @@
         <field name="model">elks.drop.wizard</field>
         <field name="arch" type="xml">
             <form string="Drop Member">
+                <field name="is_death_flow" invisible="1"/>
                 <group>
                     <field name="partner_id" readonly="1"/>
                     <field name="partner_member_num"/>
-                    <field name="drop_date"/>
+                    <field name="drop_date"
+                           string="Date Dropped"
+                           invisible="is_death_flow"/>
+                    <field name="drop_date"
+                           string="Date of Death"
+                           invisible="not is_death_flow"/>
                 </group>
-                <group string="Reason for Dropping" col="2">
+                <!--
+                    Standard drop: show all five reason checkboxes.
+                    Death-of-Member flow: hide everything except a single
+                    "Deceased" indicator so reception can't accidentally
+                    add an unrelated reason on top of a death.
+                -->
+                <group string="Reason for Dropping" col="2"
+                       invisible="is_death_flow">
                     <field name="reason_nonpayment"/>
                     <field name="reason_resigned"/>
                     <field name="reason_expelled"/>
                     <field name="reason_deceased"/>
                     <field name="reason_other"/>
                 </group>
+                <div class="alert alert-secondary"
+                     role="alert"
+                     invisible="not is_death_flow">
+                    <i class="fa fa-info-circle" title="Info"/>
+                    Recording the <b>death of a member</b>. The Secretary
+                    will read the death announcement on the lodge floor
+                    at the next meeting and push the entry into CLMS at
+                    Grand Lodge. The contact stays active until that
+                    CLMS push is complete.
+                    <field name="reason_deceased" invisible="1"/>
+                </div>
                 <group string="Notes" col="1">
                     <field name="drop_notes" nolabel="1"
                            placeholder="Enter additional details..."
@@ -25,7 +49,12 @@
                 <footer>
                     <button name="action_confirm_drop"
                             string="Confirm Drop" type="object"
-                            class="btn-primary"/>
+                            class="btn-primary"
+                            invisible="is_death_flow"/>
+                    <button name="action_confirm_drop"
+                            string="Record Death" type="object"
+                            class="btn-primary"
+                            invisible="not is_death_flow"/>
                     <button string="Cancel" special="cancel"/>
                 </footer>
             </form>
