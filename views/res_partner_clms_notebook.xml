@@ -501,18 +501,40 @@
         </field>
     </record>
 
-    <!-- Hide Invoicing and Partner Assignment. We target the visible
-         `string=` rather than the variable `name=` attribute because
-         the string is stable across Odoo versions / installed modules.
-         Each is in its own view record so a missed xpath on one
-         doesn't block the other from loading. -->
+    <!-- ──────────────────────────────────────────────────────────────
+         Hide Invoicing and Partner Assignment pages.
+
+         DISABLED 2026-06-01 because Odoo 19 rejects ``string=`` as a
+         view-inheritance selector:
+             "View inheritance may not use attribute 'string' as a
+              selector."  (odoo/tools/convert.py)
+
+         To re-enable, use ``name=`` (or another stable selector) that
+         matches the actual page name in your install.  The pages come
+         from optional modules:
+
+             • "Invoicing" page → added by `account` via
+               account.view_partner_property_form.  Page is typically
+               name="invoicing" in Odoo 19 — verify by opening the
+               partner form in dev mode and inspecting that view's XML,
+               then update the xpath below and uncomment.
+
+             • "Partner Assignment" page → added by `crm_partner_assign`
+               via crm_partner_assign.view_crm_partner_assign_form.
+               Page is typically name="assignation" in Odoo 19 — same
+               verification step.
+
+         Each record stays in its own  <record>  so a wrong name on one
+         doesn't block the other.
+         ────────────────────────────────────────────────────────────── -->
+    <!--
     <record id="view_partner_form_hide_invoicing" model="ir.ui.view">
         <field name="name">res.partner.form.hide.invoicing</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="priority" eval="60"/>
         <field name="arch" type="xml">
-            <xpath expr="//page[@string='Invoicing']" position="attributes">
+            <xpath expr="//page[@name='invoicing']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
         </field>
@@ -524,11 +546,11 @@
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="priority" eval="61"/>
         <field name="arch" type="xml">
-            <xpath expr="//page[@string='Partner Assignment']"
-                   position="attributes">
+            <xpath expr="//page[@name='assignation']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
         </field>
     </record>
+    -->
 
 </odoo>
