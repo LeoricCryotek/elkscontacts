@@ -804,6 +804,29 @@ class ResPartner(models.Model):
         if 'x_is_volunteer' in vals:
             self._sync_volunteer_employee()
 
+        # Mirror x_spouse_id on the other partner so the link is always
+        # bidirectional, regardless of whether it was set via the
+        # action_link_spouse_contact button or the dropdown. The
+        # elks_skip_clms_sync context flag is set when the action itself
+        # already mirrored, to break the recursion.
+        if 'x_spouse_id' in vals and not self.env.context.get(
+                'elks_skip_clms_sync'):
+            for rec in self:
+                spouse = rec.x_spouse_id
+                if spouse and spouse.x_spouse_id.id != rec.id:
+                    spouse.with_context(
+                        elks_skip_clms_sync=True,
+                    ).write({'x_spouse_id': rec.id})
+                elif not spouse:
+                    # Clearing the link: also clear it on whoever
+                    # was pointing back at this record.
+                    others = self.sudo().search(
+                        [('x_spouse_id', '=', rec.id)])
+                    if others:
+                        others.with_context(
+                            elks_skip_clms_sync=True,
+                        ).write({'x_spouse_id': False})
+
         # Log CLMS-tracked changes to chatter and schedule a Secretary
         # to-do so the change gets pushed into CLMS at Grand Lodge.
         if clms_old_values:
@@ -1119,6 +1142,13 @@ class ResPartner(models.Model):
     x_gl_ship_zip = fields.Char("GL Shipping ZIP")
 
     # ── CLMS Spouse / Emergency tab ───────────────────────────────────
+    x_spouse_id = fields.Many2one(
+        'res.partner', string="Spouse Contact",
+        help="Link to the spouse's contact record. Use the "
+             "'Link / Create Spouse Contact' button to find an existing "
+             "contact or create a new one from the spouse name fields. "
+             "Set bidirectionally — both partners point at each other.",
+    )
     x_spouse_has_id_card = fields.Boolean(
         "Spouse Has ID Card",
         help="The spouse has been issued an Elks ID card.",
@@ -1128,6 +1158,144 @@ class ResPartner(models.Model):
     x_emergency_contact_name = fields.Char("Emergency Contact Name")
     x_emergency_relationship = fields.Char("Emergency Relationship")
     x_emergency_phone = fields.Char("Emergency Contact Phone")
+
+    def action_link_spouse_contact(self):
+        """Find or create the spouse contact and link both directions.
+
+        Flow:
+          1. If x_spouse_id is already set → open that contact form.
+          2. Else search res.partner by first/last name (via the Elks
+             detail name fields). Single match → auto-link. Multiple
+             matches → open a list view so the user can pick one.
+          3. No match → create a new partner pre-filled from the
+             spouse name + this contact's address, link it both ways.
+
+        Bidirectional: both partners' x_spouse_id point at each other,
+        and the spouse's own DetailSpouse* text fields mirror this
+        contact's name so the relationship reads correctly from either
+        side.
+        """
+        self.ensure_one()
+
+        # Already linked → just open the spouse's form
+        if self.x_spouse_id:
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('Spouse Contact'),
+                'res_model': 'res.partner',
+                'res_id': self.x_spouse_id.id,
+                'view_mode': 'form',
+                'target': 'current',
+            }
+
+        first = (self.x_detail_spouse_first_name or '').strip()
+        last = (self.x_detail_spouse_last_name or '').strip()
+        if not (first or last):
+            raise UserError(_(
+                "Please enter the spouse's first or last name "
+                "before linking a spouse contact."
+            ))
+
+        Partner = self.env['res.partner']
+        # Search by best available combination of name parts
+        if first and last:
+            domain = [
+                ('x_detail_first_name', '=ilike', first),
+                ('x_detail_last_name', '=ilike', last),
+            ]
+        elif last:
+            domain = [('x_detail_last_name', '=ilike', last)]
+        else:
+            domain = [('x_detail_first_name', '=ilike', first)]
+        matches = Partner.search(domain + [('id', '!=', self.id)], limit=10)
+
+        if len(matches) > 1:
+            # Multiple candidates — can't safely auto-pick. Tell the
+            # user which contacts matched and have them pick from the
+            # "Spouse Contact" dropdown, then click again to finish.
+            names = ', '.join(matches.mapped('display_name')[:5])
+            extra = '' if len(matches) <= 5 else _(
+                ' (+%s more)') % (len(matches) - 5)
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _("Multiple spouse candidates"),
+                    'message': _(
+                        "Found %(n)s contacts matching %(name)s: "
+                        "%(names)s%(extra)s. Pick one in the 'Spouse "
+                        "Contact' dropdown above, then save — the "
+                        "bidirectional link will set automatically."
+                    ) % {
+                        'n': len(matches),
+                        'name': (first + ' ' + last).strip(),
+                        'names': names,
+                        'extra': extra,
+                    },
+                    'type': 'warning',
+                    'sticky': True,
+                },
+            }
+
+        if len(matches) == 1:
+            spouse = matches
+        else:
+            # No match — create a new contact pre-filled from this one
+            full_name = (first + ' ' + last).strip() or _('Spouse')
+            spouse_vals = {
+                'name': full_name,
+                'x_detail_first_name': first,
+                'x_detail_last_name': last,
+                'x_is_member': False,
+                'x_is_not_member': True,
+                # Mirror address from the member, easy to edit afterward
+                'street': self.street or False,
+                'street2': self.street2 or False,
+                'city': self.city or False,
+                'state_id': self.state_id.id if self.state_id else False,
+                'zip': self.zip or False,
+                'country_id': self.country_id.id if self.country_id else False,
+            }
+            # Mirror the spouse-of-spouse name fields back at this contact
+            if self.x_detail_first_name:
+                spouse_vals['x_detail_spouse_first_name'] = self.x_detail_first_name
+            if self.x_detail_last_name:
+                spouse_vals['x_detail_spouse_last_name'] = self.x_detail_last_name
+            spouse = Partner.with_context(
+                elks_skip_clms_sync=True,
+            ).create(spouse_vals)
+
+        # Bidirectional link
+        self.with_context(elks_skip_clms_sync=True).write({
+            'x_spouse_id': spouse.id,
+        })
+        spouse.with_context(elks_skip_clms_sync=True).write({
+            'x_spouse_id': self.id,
+        })
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Spouse Contact'),
+            'res_model': 'res.partner',
+            'res_id': spouse.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
+    def action_unlink_spouse_contact(self):
+        """Break the bidirectional spouse link without deleting either
+        contact. Useful if the link was made by mistake or the spouse
+        record needs to be re-pointed elsewhere."""
+        self.ensure_one()
+        other = self.x_spouse_id
+        self.with_context(elks_skip_clms_sync=True).write({
+            'x_spouse_id': False,
+        })
+        if other:
+            other.with_context(elks_skip_clms_sync=True).write({
+                'x_spouse_id': False,
+            })
+        return True
 
     # ── CLMS Roles tab — Lodge Status flags ───────────────────────────
     # HLM and LM booleans are bidirectionally synced with their date

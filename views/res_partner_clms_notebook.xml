@@ -185,6 +185,28 @@
                                     <field name="x_anniversary_date"/>
                                 </group>
                             </group>
+                            <group string="Spouse Contact Link"
+                                   help="Promote the spouse to a real contact for volunteer-hour tracking, member-to-member linking, etc.">
+                                <group>
+                                    <field name="x_spouse_id"
+                                           options="{'no_create_edit': True, 'no_quick_create': True}"/>
+                                </group>
+                                <group>
+                                    <button name="action_link_spouse_contact"
+                                            type="object"
+                                            string="Link / Create Spouse Contact"
+                                            icon="fa-link"
+                                            class="btn-primary"
+                                            help="Find an existing contact matching the spouse name, or create a new one pre-filled from this member's address. The link is set on both records."/>
+                                    <button name="action_unlink_spouse_contact"
+                                            type="object"
+                                            string="Unlink Spouse"
+                                            icon="fa-chain-broken"
+                                            class="btn-secondary"
+                                            invisible="not x_spouse_id"
+                                            confirm="Break the spouse link on both contacts? Neither contact will be deleted."/>
+                                </group>
+                            </group>
                             <group string="In Case of Emergency">
                                 <group>
                                     <field name="x_emergency_contact_name"/>

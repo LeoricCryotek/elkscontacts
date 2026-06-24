@@ -147,6 +147,12 @@ else:
                   parent="elks_menu_actions"
                   action="elkscontacts.ir_actions_server_print_proposed_list"
                   sequence="55"/>
+
+        <!-- "Alphabetize App Menus" action moved to the elkssecretary
+             module (Secretary > Tools > Alphabetize App Menus) since
+             it's an admin / secretary-side utility, not a contacts
+             feature. -->
+
         <!-- Move Configuration to last position in the Contacts menu bar -->
         <menuitem id="contacts.res_partner_menu_config"
                   name="Configuration"
