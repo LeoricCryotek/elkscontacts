@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_elks_transfer_dimit_wizard_form" model="ir.ui.view">
+        <field name="name">elks.transfer.dimit.wizard.form</field>
+        <field name="model">elks.transfer.dimit.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Grant Transfer Dimit">
+                <!--
+                    Layout mirrors the CLMS "Grant Transfer Dimit"
+                    screen so the Secretary sees the same fields in
+                    the same order.
+                -->
+                <div class="alert alert-info" role="alert">
+                    <i class="fa fa-info-circle" title="Info"/>
+                    Submit this wizard to grant a transfer dimit to
+                    <b><field name="partner_id" readonly="1" nolabel="1"
+                              class="oe_inline"/></b>
+                    (membership number:
+                    <b><field name="partner_member_num" readonly="1"
+                              nolabel="1" class="oe_inline"/></b>).
+                    The contact will be archived with drop reason
+                    <i>Transferred Out (Dimit Granted)</i> and a CLMS
+                    to-do will be scheduled for the Secretary.
+                </div>
+
+                <group>
+                    <field name="transfer_date"
+                           string="Granted Transfer Dimit"/>
+                    <field name="from_lodge_num"
+                           string="Lodge Number"/>
+                    <field name="partner_member_num"
+                           string="Membership Number"/>
+                    <field name="comment"
+                           string="Comment"
+                           placeholder="Optional — CLMS &quot;Comment2&quot; field"/>
+                </group>
+
+                <group string="Destination">
+                    <field name="to_lodge_num"
+                           string="Dimiting TO Lodge"
+                           placeholder="4-digit lodge number"
+                           readonly="is_new_lodge"/>
+                    <label for="is_new_lodge" string="— OR —"/>
+                    <field name="is_new_lodge"
+                           string="Signing Petition to Join a Brand-New Lodge"/>
+                </group>
+
+                <footer>
+                    <button name="action_confirm_transfer"
+                            string="Grant Transfer Dimit" type="object"
+                            class="btn-primary"/>
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

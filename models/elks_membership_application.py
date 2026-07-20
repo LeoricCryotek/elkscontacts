@@ -907,11 +907,30 @@ class ElksMembershipApplication(models.Model):
         return records
 
     def write(self, vals):
-        """Format phone numbers on write."""
+        """Format phone numbers on write and auto-flag required
+        attestations if the application type is being changed to one
+        of the "already attested elsewhere" categories (reinstatement,
+        affiliation, transfer dimit). This covers the case where the
+        record was created as a New Member and later re-classified —
+        the onchange only fires from the UI, and create() only handles
+        brand-new records."""
         for ph_field in ('applicant_phone', 'applicant_mobile',
                          'applicant_business_phone'):
             if vals.get(ph_field):
                 vals[ph_field] = _format_us_phone(vals[ph_field])
+        # Auto-check attestations when re-classifying to a non-new type.
+        # Only set flags that aren't already being explicitly written in
+        # this same vals dict, so an intentional False from the caller
+        # isn't clobbered.
+        if vals.get('application_type') in (
+                'reinstatement', 'affiliation', 'transfer_dimit'):
+            for q_field in (
+                'q_belief_in_god', 'q_us_citizen',
+                'q_willing_to_assume_obligation',
+                'q_no_subversive_affiliation',
+                'q_never_convicted_felony', 'q_bona_fide_resident',
+            ):
+                vals.setdefault(q_field, True)
         return super().write(vals)
 
     # ------------------------------------------------------------------

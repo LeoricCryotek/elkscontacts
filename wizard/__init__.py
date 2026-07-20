@@ -6,5 +6,6 @@ from . import employee_merge_wizard
 from . import initiate_wizard
 from . import volunteer_link_wizard
 from . import suspension_wizard
+from . import transfer_dimit_wizard
 from . import volunteer_signup_wizard
 from . import officer_poster_wizard

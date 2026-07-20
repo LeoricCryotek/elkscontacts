@@ -1,4 +1,23 @@
 <odoo>
+    <!--
+        Server actions bound to res.partner so they appear in the
+        contact form's Action (three-dots) menu alongside the smart
+        buttons. Non-member contacts see nothing thanks to the
+        UserError raised inside the wizard opener.
+    -->
+    <record id="ir_actions_server_open_transfer_dimit_wizard"
+            model="ir.actions.server">
+        <field name="name">Grant Transfer Dimit</field>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="binding_model_id" ref="base.model_res_partner"/>
+        <field name="binding_view_types">form</field>
+        <field name="state">code</field>
+        <field name="code">
+if record:
+    action = record.action_open_transfer_dimit_wizard()
+        </field>
+    </record>
+
     <!-- Contact type toggles at top of contact form -->
     <record id="view_partner_form_elks_member_flag" model="ir.ui.view">
         <field name="name">res.partner.form.elks.member.flag</field>
@@ -108,6 +127,20 @@
                         icon="fa-user-times"
                         invisible="not x_is_member">
                     <span>Drop Member</span>
+                </button>
+                <!--
+                    Grant Transfer Dimit — outgoing dimit to another
+                    lodge (or petition for a brand-new lodge). Mirrors
+                    the CLMS "Grant Transfer Dimit" screen. Archives
+                    the contact with drop reason "Transferred Out"
+                    and schedules a CLMS Secretary to-do.
+                -->
+                <button name="action_open_transfer_dimit_wizard"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-exchange"
+                        invisible="not x_is_member">
+                    <span>Grant Transfer Dimit</span>
                 </button>
                 <!--
                     Death of Member - opens the same drop wizard pre-set

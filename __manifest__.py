@@ -1,6 +1,6 @@
 {
     "name": "Elks Contacts",
-    "version": "19.0.4.1",
+    "version": "19.0.4.2",
     "category": "Contacts",
     "summary": "Manage Elks Member Contact Information",
     "author": "Danny Santiago",
@@ -17,6 +17,7 @@
         "wizard/volunteer_signup_wizard_views.xml",
         "wizard/suspension_wizard_views.xml",
         "wizard/drop_wizard_views.xml",
+        "wizard/transfer_dimit_wizard_views.xml",
         "wizard/clms_import_wizard_views.xml",
         "views/elks_contact_views.xml",
         "views/elks_action.xml",

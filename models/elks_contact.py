@@ -1577,11 +1577,43 @@ class ResPartner(models.Model):
         ('resigned', 'Resigned'),
         ('expelled', 'Expelled'),
         ('deceased', 'Deceased'),
+        ('transfer_out', 'Transferred Out (Dimit Granted)'),
         ('other', 'Other'),
     ], string="Drop Reason", tracking=True)
     x_drop_date = fields.Date(
         "Date Dropped", tracking=True,
         help="Date the member was dropped from the rolls.",
+    )
+
+    # ── Transfer Dimit (outgoing) tracking ────────────────────────────
+    # Populated by the Grant Transfer Dimit wizard when a member takes
+    # a dimit to another lodge (or signs the petition to charter a
+    # brand-new lodge). Persisted on the contact so we retain the
+    # historical destination even after the contact is archived.
+    x_transfer_out_date = fields.Date(
+        "Transfer Dimit Granted",
+        tracking=True,
+        help="Date the outgoing Transfer Dimit was granted.",
+    )
+    x_transfer_out_to_lodge_num = fields.Char(
+        "Dimiting TO Lodge #",
+        size=4,
+        tracking=True,
+        help="4-digit BPOE lodge number the member is transferring to. "
+             "Leave blank if the member is signing a petition to join a "
+             "brand-new lodge that has not yet been chartered.",
+    )
+    x_transfer_out_new_lodge = fields.Boolean(
+        "Signing Petition for New Lodge",
+        tracking=True,
+        help="True when the member is signing a petition to charter a "
+             "brand-new lodge (no destination lodge number yet).",
+    )
+    x_transfer_out_comment = fields.Char(
+        "Transfer Dimit Comment",
+        tracking=True,
+        help="Free-text note that mirrors the CLMS 'Comment2' field on "
+             "the Grant Transfer Dimit screen.",
     )
     x_drop_notes = fields.Text(
         "Drop Notes", tracking=True,
@@ -1771,6 +1803,33 @@ class ResPartner(models.Model):
             'type': 'ir.actions.act_window',
             'name': _('Drop Member'),
             'res_model': 'elks.drop.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_partner_id': self.id,
+            },
+        }
+
+    def action_open_transfer_dimit_wizard(self):
+        """Open the Grant Transfer Dimit wizard.
+
+        Mirrors the CLMS 'Grant Transfer Dimit' screen — captures the
+        transfer date, destination lodge number (or 'petition for new
+        lodge' flag), and a free-form comment. Confirming the wizard
+        writes the transfer fields, posts to chatter, schedules a
+        Secretary CLMS to-do, logs member history, and archives the
+        contact with drop_reason='transfer_out'.
+        """
+        self.ensure_one()
+        if not self.x_is_member:
+            raise UserError(_(
+                "Transfer Dimit can only be granted to an Elks member. "
+                "The selected contact is not flagged as a member."
+            ))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Grant Transfer Dimit'),
+            'res_model': 'elks.transfer.dimit.wizard',
             'view_mode': 'form',
             'target': 'new',
             'context': {
