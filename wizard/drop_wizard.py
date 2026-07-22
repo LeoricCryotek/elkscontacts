@@ -217,6 +217,58 @@ class ElksDropWizard(models.TransientModel):
                 subtype_xmlid='mail.mt_note',
             )
 
+            # Schedule a CLMS to-do for the Secretary so this drop
+            # appears in their queue — same pattern as the death and
+            # transfer-dimit wizards. The Secretary needs to push the
+            # drop into CLMS at Grand Lodge; without an activity the
+            # drop can silently sit un-recorded.
+            todo_type = self.env.ref(
+                'mail.mail_activity_data_todo', raise_if_not_found=False,
+            )
+            if todo_type:
+                secretary_group = self.env.ref(
+                    'elkscontacts.group_elks_secretary',
+                    raise_if_not_found=False,
+                )
+                assignee = self.env.user
+                if secretary_group:
+                    secretary_users = self.env['res.users'].search(
+                        [('group_ids', 'in', secretary_group.id)],
+                        limit=1,
+                    )
+                    if secretary_users:
+                        assignee = secretary_users
+                deadline = fields.Date.context_today(self) + \
+                    relativedelta(days=7)
+                self.partner_id.activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    date_deadline=deadline,
+                    user_id=assignee.id,
+                    summary=_(
+                        "CLMS: Process drop of %s",
+                    ) % (self.partner_id.name or 'member'),
+                    note=_(
+                        "<p>Record this drop in CLMS at Grand Lodge:</p>"
+                        "<ul>"
+                        "<li><b>Member:</b> %(name)s (#%(memnum)s)</li>"
+                        "<li><b>Date Dropped:</b> %(date)s</li>"
+                        "<li><b>Reason:</b> %(reason)s</li>"
+                        "<li><b>Notes:</b> %(notes)s</li>"
+                        "</ul>"
+                        "<p>The Odoo contact has been archived with "
+                        "drop reason <i>%(reason)s</i>. Once CLMS is "
+                        "updated, mark this activity done.</p>"
+                    ) % {
+                        'name': self.partner_id.name or '—',
+                        'memnum': (
+                            self.partner_id.x_detail_member_num or '—'
+                        ),
+                        'date': self.drop_date,
+                        'reason': reason_str,
+                        'notes': self.drop_notes or '—',
+                    },
+                )
+
         # Log to member history if the model exists
         if hasattr(self.env, 'registry') and 'elks.member.history' in self.env:
             self.env['elks.member.history'].create({
