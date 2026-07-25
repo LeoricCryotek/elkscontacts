@@ -29,7 +29,14 @@
                  leftmost so secretaries land on the CLMS view first,
                  matching how they work in CLMS itself. -->
             <xpath expr="//notebook/page[1]" position="before">
-                <page string="CLMS Record" name="clms_record">
+                <!-- Hide the CLMS Record notebook for non-Elk contacts
+                     (Customers, Volunteers-only, Guests). The whole
+                     notebook is Elks-member-only data, so on a plain
+                     customer contact it's just noise. Use x_is_member
+                     since that's the flag we already gate the smart
+                     buttons on. -->
+                <page string="CLMS Record" name="clms_record"
+                      invisible="not x_is_member">
 
                     <notebook>
 
