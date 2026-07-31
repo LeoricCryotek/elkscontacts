@@ -1567,3 +1567,81 @@ class ElksMembershipApplication(models.Model):
                 body=_("<strong>Application reset to Proposed</strong>"),
                 message_type='comment', subtype_xmlid='mail.mt_note',
             )
+
+    def action_revert_initiation(self):
+        """Move an accidentally-initiated applicant back to Elected.
+
+        Undoes the effect of :meth:`action_initiate` for the common
+        "I clicked the wrong button" case:
+          1. Moves stage 'initiated' -> 'elected' so the applicant is
+             waiting to be initiated again.
+          2. Flips the linked partner back to initiate status
+             (x_is_initiate=True, x_is_not_member=True) so they're not
+             counted as a full member yet.
+          3. Cancels the "CLMS: Enter new proposed member" activity if
+             it's still open — no point pushing an initiation into CLMS
+             if we just reversed it.
+          4. Logs the whole reversal to chatter on both the application
+             AND the contact for audit purposes.
+
+        Does NOT delete the linked partner record. If the initiation
+        created a brand-new contact by mistake, you'll still want to
+        archive that contact by hand — this method plays it safe and
+        preserves the record instead of quietly nuking it.
+        """
+        for rec in self:
+            if rec.stage != 'initiated':
+                raise UserError(_(
+                    "Only an Initiated application can be reverted. "
+                    "This one is currently at stage: %s"
+                ) % dict(APPLICATION_STAGES).get(rec.stage, rec.stage))
+
+            partner = rec.applicant_partner_id
+            partner_note = ''
+            if partner:
+                # Skip the CLMS sync activity/chatter noise since this
+                # is an internal correction, not a real field edit.
+                partner.with_context(elks_skip_clms_sync=True).write({
+                    'x_is_initiate': True,
+                    'x_is_not_member': True,
+                })
+                partner_note = _(
+                    "<br/>Linked contact <b>%s</b> flipped back to "
+                    "<i>Initiate (not yet a full member)</i>."
+                ) % (partner.name or '')
+                partner.message_post(
+                    body=_(
+                        "<b>Initiation reverted</b> by %(user)s.<br/>"
+                        "This contact is no longer flagged as a full "
+                        "member — application <b>%(ref)s</b> was moved "
+                        "back to <i>Elected</i>. Re-run <b>Initiate</b> "
+                        "on the application when ready."
+                    ) % {
+                        'user': self.env.user.name,
+                        'ref': rec.name or '',
+                    },
+                    message_type='comment',
+                    subtype_xmlid='mail.mt_note',
+                )
+
+            # Cancel any still-open CLMS to-do — the initiation we're
+            # reversing is what triggered it.
+            open_activities = rec.activity_ids.filtered(
+                lambda a: 'CLMS' in (a.summary or '')
+            )
+            if open_activities:
+                open_activities.unlink()
+
+            rec.write({'stage': 'elected'})
+            rec.message_post(
+                body=_(
+                    "<b>Initiation reverted</b> by %(user)s. "
+                    "Stage moved back from <i>Initiated</i> to "
+                    "<i>Elected</i>.%(partner_note)s"
+                ) % {
+                    'user': self.env.user.name,
+                    'partner_note': partner_note,
+                },
+                message_type='comment',
+                subtype_xmlid='mail.mt_note',
+            )

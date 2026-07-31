@@ -45,6 +45,17 @@
                     <button name="action_reset_to_proposed"
                             string="Reset to Proposed" type="object"
                             invisible="stage not in ('rejected', 'withdrawn')"/>
+                    <!--
+                        Revert an accidental Initiation. Moves stage
+                        Initiated -> Elected, flips the linked contact
+                        back to Initiate, and cancels the CLMS to-do.
+                        Only visible on Initiated records; asks for
+                        confirmation because it touches the contact.
+                    -->
+                    <button name="action_revert_initiation"
+                            string="Revert Initiation" type="object"
+                            invisible="stage != 'initiated'"
+                            confirm="Move this applicant back to Elected and un-flag the contact as a full member? The CLMS to-do will also be cancelled. Any contact record created at initiation will remain — archive it separately if it was created by mistake."/>
                     <field name="stage" widget="statusbar"
                            statusbar_visible="proposed,investigation,balloting,elected,initiated"/>
                 </header>

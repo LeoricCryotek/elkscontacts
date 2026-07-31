@@ -294,16 +294,28 @@ class ClmsImportWizard(models.TransientModel):
         """Parse dates from CLMS exports, handling multiple formats.
 
         CLMS has exported dates in various formats over the years:
-          2027-04-01  (ISO, current)
-          04/01/2027  (US)
-          04.01.2027  (US with dots)
-          4/1/2027    (US short)
+          2027-04-01               (ISO, current)
+          04/01/2027               (US)
+          04.01.2027               (US with dots)
+          4/1/2027                 (US short)
+          12/2/2008 12:00:00 AM    (US with time — dischargeDate column)
+          2008-12-02 00:00:00      (ISO with time)
+        The datetime-bearing formats are for columns like dischargeDate
+        where CLMS emits a full timestamp even though we only store the
+        date portion on x_discharge_date.
         """
         if not val:
             return False
         val = val.strip()
-        for fmt in ('%Y-%m-%d', '%m/%d/%Y', '%m.%d.%Y', '%m-%d-%Y',
-                    '%m/%d/%y', '%m.%d.%y'):
+        for fmt in (
+            # Date-only first (fast path)
+            '%Y-%m-%d', '%m/%d/%Y', '%m.%d.%Y', '%m-%d-%Y',
+            '%m/%d/%y', '%m.%d.%y',
+            # Datetime variants — strip time, keep date
+            '%m/%d/%Y %I:%M:%S %p', '%m/%d/%Y %H:%M:%S',
+            '%m-%d-%Y %I:%M:%S %p', '%m-%d-%Y %H:%M:%S',
+            '%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S',
+        ):
             try:
                 return datetime.datetime.strptime(val, fmt).date()
             except ValueError:
