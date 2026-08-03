@@ -42,19 +42,35 @@
         </thead>
         <tbody>
           <t t-foreach="section_terms" t-as="term">
-            <tr>
+            <!--
+                Vacant rows print "VACANT" in the Member column
+                (in red) and skip the officer's email/phone. The
+                historical name is preserved on the term record
+                for audit but hidden from the printed roster.
+            -->
+            <tr t-att-style="'background-color:#fff2f2;' if term.x_is_vacated else ''">
               <td>
                 <t t-esc="dict(term._fields['position'].selection).get(term.position, term.position)"/>
               </td>
               <td>
-                <t t-esc="term.partner_id.name"/>
+                <t t-if="term.x_is_vacated">
+                  <span style="color:#b00020; font-weight:bold; font-style:italic;">VACANT</span>
+                </t>
+                <t t-else="">
+                  <t t-esc="term.partner_id.name"/>
+                </t>
               </td>
               <td style="font-size: 0.85em;">
-                <t t-if="term.partner_id.email">
-                  <t t-esc="term.partner_id.email"/><br/>
+                <t t-if="not term.x_is_vacated">
+                  <t t-if="term.partner_id.email">
+                    <t t-esc="term.partner_id.email"/><br/>
+                  </t>
+                  <t t-if="term.partner_id.phone">
+                    <t t-esc="term.partner_id.phone"/>
+                  </t>
                 </t>
-                <t t-if="term.partner_id.phone">
-                  <t t-esc="term.partner_id.phone"/>
+                <t t-else="">
+                  <span style="color:#888; font-style:italic;">Position vacant</span>
                 </t>
               </td>
               <td>

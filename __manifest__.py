@@ -18,6 +18,7 @@
         "wizard/suspension_wizard_views.xml",
         "wizard/drop_wizard_views.xml",
         "wizard/transfer_dimit_wizard_views.xml",
+        "wizard/vacate_officer_wizard_views.xml",
         "wizard/clms_import_wizard_views.xml",
         "views/elks_contact_views.xml",
         "views/elks_action.xml",

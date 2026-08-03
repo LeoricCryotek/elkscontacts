@@ -11,7 +11,8 @@
     <field name="name">elks.officer.term.list</field>
     <field name="model">elks.officer.term</field>
     <field name="arch" type="xml">
-      <list decoration-muted="not active">
+      <list decoration-muted="not active or x_is_vacated"
+            decoration-danger="x_is_vacated">
         <field name="active" column_invisible="1"/>
         <field name="lodge_year"/>
         <field name="position"/>
@@ -20,8 +21,11 @@
         <field name="partial_year"/>
         <field name="date_start" optional="show"/>
         <field name="date_end" optional="show"/>
-        <field name="gender" optional="show"/>
-        <field name="show_on_website" optional="show"/>
+        <field name="x_is_vacated" string="Vacant" optional="show"/>
+        <field name="x_vacated_date" string="Vacated On" optional="hide"/>
+        <field name="x_vacated_reason" string="Vacate Reason" optional="hide"/>
+        <field name="gender" optional="hide"/>
+        <field name="show_on_website" optional="hide"/>
         <field name="message" optional="hide"/>
       </list>
     </field>
@@ -32,7 +36,33 @@
     <field name="model">elks.officer.term</field>
     <field name="arch" type="xml">
       <form>
+        <header>
+          <!--
+              Mid-term vacancy actions. Two mutually-exclusive buttons:
+              "Mark Officer Vacated" (visible while filled) and
+              "Fill Vacant Position" (visible once vacated). This is the
+              only supported workflow for retiring/resigning an officer
+              mid-term — deleting the record would lose the historical
+              audit of who held the seat.
+          -->
+          <button name="action_open_vacate_wizard"
+                  string="Mark Officer Vacated"
+                  type="object"
+                  class="btn-danger"
+                  invisible="x_is_vacated"/>
+          <button name="action_open_fill_vacant_position"
+                  string="Fill Vacant Position"
+                  type="object"
+                  class="btn-primary"
+                  invisible="not x_is_vacated"/>
+          <field name="x_is_vacated" invisible="1"/>
+        </header>
         <sheet>
+          <!-- Vacant ribbon so it's obvious at a glance that this
+               officer seat is currently displayed as Vacant. -->
+          <widget name="web_ribbon" title="Vacant"
+                  bg_color="text-bg-danger"
+                  invisible="not x_is_vacated"/>
           <div class="oe_button_box" name="button_box"/>
           <field name="image_1920" widget="image" class="oe_avatar"
                  options="{'preview_image': 'image_1920'}"/>
@@ -54,6 +84,21 @@
               <field name="officer_email" widget="email"/>
               <field name="officer_phone" widget="phone"/>
               <field name="show_on_website"/>
+            </group>
+          </group>
+          <!-- Vacancy details — only rendered once the wizard has
+               stamped the term. Left editable so the Secretary can
+               correct the reason or date without going through a
+               reset-and-redo. -->
+          <group string="Vacancy Details"
+                 invisible="not x_is_vacated">
+            <group>
+              <field name="x_vacated_date"/>
+              <field name="x_vacated_reason"/>
+            </group>
+            <group>
+              <field name="x_vacated_notes"
+                     placeholder="Optional detail..."/>
             </group>
           </group>
           <separator string="Public Message"/>
@@ -78,6 +123,10 @@
                 domain="[('active', '=', False)]"/>
         <filter name="filter_partial" string="Partial Year"
                 domain="[('partial_year', '=', True)]"/>
+        <filter name="filter_vacant" string="Vacant Seats"
+                domain="[('x_is_vacated', '=', True)]"/>
+        <filter name="filter_filled" string="Filled Seats"
+                domain="[('x_is_vacated', '=', False)]"/>
         <separator/>
         <filter name="group_year" string="Lodge Year" context="{'group_by': 'lodge_year'}"/>
         <filter name="group_position" string="Position" context="{'group_by': 'position'}"/>

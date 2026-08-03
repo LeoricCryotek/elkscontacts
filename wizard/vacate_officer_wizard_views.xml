@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_elks_officer_vacate_wizard_form" model="ir.ui.view">
+        <field name="name">elks.officer.vacate.wizard.form</field>
+        <field name="model">elks.officer.vacate.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Mark Officer Vacated">
+                <div class="alert alert-warning" role="alert">
+                    <i class="fa fa-exclamation-triangle" title="Warning"/>
+                    Mark <b><field name="partner_id" readonly="1"
+                                    nolabel="1" class="oe_inline"/></b>
+                    as no longer serving in the position:
+                    <b><field name="term_display" readonly="1"
+                              nolabel="1" class="oe_inline"/></b>.
+                    <br/>
+                    The term record is preserved as history — the
+                    roster report and public website will simply show
+                    this position as <b>Vacant</b>.
+                </div>
+                <group>
+                    <field name="term_id" invisible="1"/>
+                    <field name="vacated_date"/>
+                    <field name="reason"/>
+                    <field name="fill_immediately"/>
+                </group>
+                <group string="Notes" col="1">
+                    <field name="notes" nolabel="1"
+                           placeholder="Optional — reason detail, effective date context, etc."/>
+                </group>
+                <footer>
+                    <button name="action_confirm_vacate"
+                            string="Confirm Vacancy"
+                            type="object" class="btn-primary"/>
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

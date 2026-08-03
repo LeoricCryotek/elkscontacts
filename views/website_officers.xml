@@ -24,55 +24,78 @@
                             <div class="text-center p-4 rounded-3"
                                  style="background: linear-gradient(135deg, #f8f6fa 0%, #ede7f3 100%);
                                         border: 1px solid #ddd;">
-                                <!-- Photo -->
-                                <div class="mx-auto mb-3"
-                                     style="width: 160px; height: 160px;">
-                                    <t t-if="er_officer.image_1920">
-                                        <img t-attf-src="/web/image?model=elks.officer.term&amp;id={{er_officer.id}}&amp;field=image_1920"
-                                             class="rounded-circle shadow"
-                                             style="width: 160px; height: 160px;
-                                                    object-fit: cover;
-                                                    border: 4px solid #46166a;"
-                                             t-att-alt="er_officer.partner_id.name"/>
-                                    </t>
-                                    <t t-else="">
-                                        <img t-att-src="'/elkscontacts/static/img/elk_avatar_%s.png?v=2' % (er_officer.gender or 'male')"
-                                             class="rounded-circle shadow"
-                                             style="width: 160px; height: 160px;
-                                                    object-fit: cover;
-                                                    border: 4px solid #46166a;"
-                                             t-att-alt="er_officer.partner_id.name"/>
-                                    </t>
-                                </div>
-                                <!-- Name and title -->
-                                <h4 class="fw-bold mb-1">
-                                    <t t-esc="er_officer.partner_id.name"/>
-                                </h4>
-                                <p class="mb-2" style="color: #46166a; font-weight: 600;
-                                                       font-size: 1.1rem;">
-                                    Exalted Ruler
-                                </p>
-                                <t t-if="er_officer.officer_email">
-                                    <p class="mb-1">
-                                        <a t-att-href="'mailto:' + er_officer.officer_email"
-                                           style="color: #46166a;">
-                                            <t t-esc="er_officer.officer_email"/>
-                                        </a>
+                                <!-- Vacated ER: hide name/photo/contact,
+                                     render a Position Vacant placeholder
+                                     so members know there's no acting ER
+                                     until the seat is filled. -->
+                                <t t-if="er_officer.x_is_vacated">
+                                    <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
+                                         style="width: 160px; height: 160px;
+                                                background:#f2f2f2;
+                                                border: 4px dashed #b00020;">
+                                        <i class="fa fa-user-times"
+                                           style="font-size: 60px; color:#b00020;"
+                                           title="Vacant"/>
+                                    </div>
+                                    <h4 class="fw-bold mb-1"
+                                        style="color:#b00020;">Position Vacant</h4>
+                                    <p class="mb-2"
+                                       style="color: #46166a; font-weight: 600;
+                                              font-size: 1.1rem;">
+                                        Exalted Ruler
                                     </p>
                                 </t>
-                                <t t-if="er_officer.officer_phone">
-                                    <p class="mb-1">
-                                        <a t-att-href="'tel:' + er_officer.officer_phone"
-                                           style="color: #46166a;">
-                                            <t t-esc="er_officer.officer_phone"/>
-                                        </a>
+                                <t t-else="">
+                                    <!-- Photo -->
+                                    <div class="mx-auto mb-3"
+                                         style="width: 160px; height: 160px;">
+                                        <t t-if="er_officer.image_1920">
+                                            <img t-attf-src="/web/image?model=elks.officer.term&amp;id={{er_officer.id}}&amp;field=image_1920"
+                                                 class="rounded-circle shadow"
+                                                 style="width: 160px; height: 160px;
+                                                        object-fit: cover;
+                                                        border: 4px solid #46166a;"
+                                                 t-att-alt="er_officer.partner_id.name"/>
+                                        </t>
+                                        <t t-else="">
+                                            <img t-att-src="'/elkscontacts/static/img/elk_avatar_%s.png?v=2' % (er_officer.gender or 'male')"
+                                                 class="rounded-circle shadow"
+                                                 style="width: 160px; height: 160px;
+                                                        object-fit: cover;
+                                                        border: 4px solid #46166a;"
+                                                 t-att-alt="er_officer.partner_id.name"/>
+                                        </t>
+                                    </div>
+                                    <!-- Name and title -->
+                                    <h4 class="fw-bold mb-1">
+                                        <t t-esc="er_officer.partner_id.name"/>
+                                    </h4>
+                                    <p class="mb-2" style="color: #46166a; font-weight: 600;
+                                                           font-size: 1.1rem;">
+                                        Exalted Ruler
                                     </p>
-                                </t>
-                                <t t-if="er_officer.message">
-                                    <p class="mt-2 mb-0 fst-italic"
-                                       style="font-size: 0.95rem; color: #555;">
-                                        <t t-esc="er_officer.message"/>
-                                    </p>
+                                    <t t-if="er_officer.officer_email">
+                                        <p class="mb-1">
+                                            <a t-att-href="'mailto:' + er_officer.officer_email"
+                                               style="color: #46166a;">
+                                                <t t-esc="er_officer.officer_email"/>
+                                            </a>
+                                        </p>
+                                    </t>
+                                    <t t-if="er_officer.officer_phone">
+                                        <p class="mb-1">
+                                            <a t-att-href="'tel:' + er_officer.officer_phone"
+                                               style="color: #46166a;">
+                                                <t t-esc="er_officer.officer_phone"/>
+                                            </a>
+                                        </p>
+                                    </t>
+                                    <t t-if="er_officer.message">
+                                        <p class="mt-2 mb-0 fst-italic"
+                                           style="font-size: 0.95rem; color: #555;">
+                                            <t t-esc="er_officer.message"/>
+                                        </p>
+                                    </t>
                                 </t>
                             </div>
                         </div>
@@ -95,56 +118,78 @@
                                     <div class="text-center p-3 h-100 rounded-3"
                                          style="background: #fafafa;
                                                 border: 1px solid #eee;">
-                                        <!-- Photo -->
-                                        <div class="mx-auto mb-3"
-                                             style="width: 100px; height: 100px;">
-                                            <t t-if="officer.image_1920">
-                                                <img t-attf-src="/web/image?model=elks.officer.term&amp;id={{officer.id}}&amp;field=image_1920"
-                                                     class="rounded-circle shadow-sm"
-                                                     style="width: 100px; height: 100px;
-                                                            object-fit: cover;
-                                                            border: 3px solid #46166a;"
-                                                     t-att-alt="officer.partner_id.name"/>
-                                            </t>
-                                            <t t-else="">
-                                                <img t-att-src="'/elkscontacts/static/img/elk_avatar_%s.png?v=2' % (officer.gender or 'male')"
-                                                     class="rounded-circle shadow-sm"
-                                                     style="width: 100px; height: 100px;
-                                                            object-fit: cover;
-                                                            border: 3px solid #46166a;"
-                                                     t-att-alt="officer.partner_id.name"/>
-                                            </t>
-                                        </div>
-                                        <!-- Name -->
-                                        <h6 class="fw-bold mb-1">
-                                            <t t-esc="officer.partner_id.name"/>
-                                        </h6>
-                                        <!-- Position -->
-                                        <p class="text-muted mb-2" style="font-size: 0.9rem;">
-                                            <t t-esc="officers_position_labels.get(officer.position, officer.position)"/>
-                                        </p>
-                                        <!-- Contact info -->
-                                        <t t-if="officer.officer_email">
-                                            <p class="mb-1" style="font-size: 0.85rem;">
-                                                <a t-att-href="'mailto:' + officer.officer_email"
-                                                   style="color: #46166a;">
-                                                    <t t-esc="officer.officer_email"/>
-                                                </a>
+                                        <!-- Vacated officer: render a
+                                             Position Vacant placeholder
+                                             so members can see which
+                                             seats need to be filled. -->
+                                        <t t-if="officer.x_is_vacated">
+                                            <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
+                                                 style="width: 100px; height: 100px;
+                                                        background:#f2f2f2;
+                                                        border: 3px dashed #b00020;">
+                                                <i class="fa fa-user-times"
+                                                   style="font-size: 36px; color:#b00020;"
+                                                   title="Vacant"/>
+                                            </div>
+                                            <h6 class="fw-bold mb-1"
+                                                style="color:#b00020;">Position Vacant</h6>
+                                            <p class="text-muted mb-2"
+                                               style="font-size: 0.9rem;">
+                                                <t t-esc="officers_position_labels.get(officer.position, officer.position)"/>
                                             </p>
                                         </t>
-                                        <t t-if="officer.officer_phone">
-                                            <p class="mb-1" style="font-size: 0.85rem;">
-                                                <a t-att-href="'tel:' + officer.officer_phone"
-                                                   style="color: #46166a;">
-                                                    <t t-esc="officer.officer_phone"/>
-                                                </a>
+                                        <t t-else="">
+                                            <!-- Photo -->
+                                            <div class="mx-auto mb-3"
+                                                 style="width: 100px; height: 100px;">
+                                                <t t-if="officer.image_1920">
+                                                    <img t-attf-src="/web/image?model=elks.officer.term&amp;id={{officer.id}}&amp;field=image_1920"
+                                                         class="rounded-circle shadow-sm"
+                                                         style="width: 100px; height: 100px;
+                                                                object-fit: cover;
+                                                                border: 3px solid #46166a;"
+                                                         t-att-alt="officer.partner_id.name"/>
+                                                </t>
+                                                <t t-else="">
+                                                    <img t-att-src="'/elkscontacts/static/img/elk_avatar_%s.png?v=2' % (officer.gender or 'male')"
+                                                         class="rounded-circle shadow-sm"
+                                                         style="width: 100px; height: 100px;
+                                                                object-fit: cover;
+                                                                border: 3px solid #46166a;"
+                                                         t-att-alt="officer.partner_id.name"/>
+                                                </t>
+                                            </div>
+                                            <!-- Name -->
+                                            <h6 class="fw-bold mb-1">
+                                                <t t-esc="officer.partner_id.name"/>
+                                            </h6>
+                                            <!-- Position -->
+                                            <p class="text-muted mb-2" style="font-size: 0.9rem;">
+                                                <t t-esc="officers_position_labels.get(officer.position, officer.position)"/>
                                             </p>
-                                        </t>
-                                        <t t-if="officer.message">
-                                            <p class="mt-2 mb-0 fst-italic"
-                                               style="font-size: 0.85rem; color: #555;">
-                                                <t t-esc="officer.message"/>
-                                            </p>
+                                            <!-- Contact info -->
+                                            <t t-if="officer.officer_email">
+                                                <p class="mb-1" style="font-size: 0.85rem;">
+                                                    <a t-att-href="'mailto:' + officer.officer_email"
+                                                       style="color: #46166a;">
+                                                        <t t-esc="officer.officer_email"/>
+                                                    </a>
+                                                </p>
+                                            </t>
+                                            <t t-if="officer.officer_phone">
+                                                <p class="mb-1" style="font-size: 0.85rem;">
+                                                    <a t-att-href="'tel:' + officer.officer_phone"
+                                                       style="color: #46166a;">
+                                                        <t t-esc="officer.officer_phone"/>
+                                                    </a>
+                                                </p>
+                                            </t>
+                                            <t t-if="officer.message">
+                                                <p class="mt-2 mb-0 fst-italic"
+                                                   style="font-size: 0.85rem; color: #555;">
+                                                    <t t-esc="officer.message"/>
+                                                </p>
+                                            </t>
                                         </t>
                                     </div>
                                 </div>

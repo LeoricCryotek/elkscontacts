@@ -167,6 +167,103 @@ class ElksOfficerTerm(models.Model):
         "Show on Website", default=True,
         help="Uncheck to hide this officer from the public website page.",
     )
+
+    # ── Vacate / Resignation tracking ────────────────────────
+    # When an officer resigns, retires, or is removed mid-term we
+    # DON'T delete the term row (that would lose the historical
+    # record of who held the seat). Instead we stamp these fields.
+    # The roster report and public website check x_is_vacated and
+    # render the position as "Vacant" while preserving the audit
+    # trail here.
+    x_vacated_date = fields.Date(
+        "Vacated On",
+        tracking=True,
+        help="Date the officer stopped serving in this position. "
+             "When set, the roster report and public website will show "
+             "this position as Vacant. The officer's name is preserved "
+             "on this record for the audit trail.",
+    )
+    x_vacated_reason = fields.Selection([
+        ('resigned', 'Resigned'),
+        ('retired', 'Retired'),
+        ('removed', 'Removed'),
+        ('deceased', 'Deceased'),
+        ('other', 'Other'),
+    ], string="Vacate Reason", tracking=True)
+    x_vacated_notes = fields.Text(
+        "Vacate Notes", tracking=True,
+        help="Optional detail on why the position was vacated.",
+    )
+    x_is_vacated = fields.Boolean(
+        string="Position Vacant",
+        compute='_compute_x_is_vacated', store=True, index=True,
+        help="True when the officer has left this position mid-term. "
+             "Report and website will render this seat as Vacant.",
+    )
+
+    @api.depends('x_vacated_date')
+    def _compute_x_is_vacated(self):
+        for rec in self:
+            rec.x_is_vacated = bool(rec.x_vacated_date)
+
+    def action_open_vacate_wizard(self):
+        """Open the small wizard used to mark this officer as vacated.
+
+        Prompts for date, reason, and optional notes so the Secretary
+        never has to remember which fields to fill by hand. On confirm
+        the wizard writes the fields, updates date_end if not already
+        set, and posts a chatter note.
+        """
+        self.ensure_one()
+        if self.x_is_vacated:
+            raise ValidationError(_(
+                "This term is already marked as vacated on %s. "
+                "Clear the vacated date first if you need to change it."
+            ) % self.x_vacated_date)
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Mark Officer Vacated'),
+            'res_model': 'elks.officer.vacate.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_term_id': self.id,
+            },
+        }
+
+    def action_open_fill_vacant_position(self):
+        """Open the Officer Term create form pre-filled to backfill
+        this vacant seat with a replacement.
+
+        Defaults the new term to the same position + lodge year, with
+        a start date the day after this term was vacated, and marks it
+        partial_year so it doesn't collide with the vacated original
+        on any lodge-year uniqueness checks.
+        """
+        self.ensure_one()
+        if not self.x_is_vacated:
+            raise ValidationError(_(
+                "This position isn't marked as vacant. Use the "
+                "'Mark Officer Vacated' button first to record the "
+                "vacancy, then fill it."
+            ))
+        from datetime import timedelta
+        new_start = (self.x_vacated_date + timedelta(days=1)) if \
+            self.x_vacated_date else False
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Fill Vacant Position'),
+            'res_model': 'elks.officer.term',
+            'view_mode': 'form',
+            'target': 'current',
+            'context': {
+                'default_position': self.position,
+                'default_lodge_year': self.lodge_year,
+                'default_officer_type': self.officer_type,
+                'default_partial_year': True,
+                'default_date_start': new_start,
+            },
+        }
     # Backward-compatible alias so cached views referencing 'notes' still work
     notes = fields.Text(related='message', string="Notes (deprecated)")
 
