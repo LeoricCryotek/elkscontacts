@@ -74,29 +74,36 @@ class ElksOfficerVacateWizard(models.TransientModel):
             self.reason, self.reason,
         )
         note_line = ('<br/>Notes: ' + self.notes) if self.notes else ''
-        self.term_id.message_post(
-            body=_(
-                "<b>Position vacated</b> by %(user)s.<br/>"
-                "Officer: %(officer)s<br/>"
-                "Date: %(date)s<br/>"
-                "Reason: %(reason)s"
-                "%(notes)s"
-                "<br/><i>This position will now display as "
-                "<b>Vacant</b> on the roster report and the public "
-                "website. The term record is preserved as history.</i>"
-            ) % {
-                'user': self.env.user.name,
-                'officer': (self.partner_id.name if self.partner_id
-                            else '—'),
-                'date': self.vacated_date,
-                'reason': reason_label,
-                'notes': note_line,
-            },
-            subtype_xmlid='mail.mt_note',
-        )
-        # Also log to the officer's contact chatter so the member's
-        # own record reflects that they left mid-term.
-        if self.partner_id:
+        # elks.officer.term doesn't currently inherit mail.thread, so
+        # message_post isn't available on it. Guard the call so future
+        # additions of mail.thread inheritance keep working, and drop
+        # to a plain log line otherwise. The contact record DOES
+        # inherit mail.thread so that side always logs.
+        if hasattr(self.term_id, 'message_post'):
+            self.term_id.message_post(
+                body=_(
+                    "<b>Position vacated</b> by %(user)s.<br/>"
+                    "Officer: %(officer)s<br/>"
+                    "Date: %(date)s<br/>"
+                    "Reason: %(reason)s"
+                    "%(notes)s"
+                    "<br/><i>This position will now display as "
+                    "<b>Vacant</b> on the roster report and the public "
+                    "website. The term record is preserved as history.</i>"
+                ) % {
+                    'user': self.env.user.name,
+                    'officer': (self.partner_id.name if self.partner_id
+                                else '—'),
+                    'date': self.vacated_date,
+                    'reason': reason_label,
+                    'notes': note_line,
+                },
+                subtype_xmlid='mail.mt_note',
+            )
+        # Log to the officer's contact chatter — res.partner has
+        # mail.thread so this always works — so the member's own
+        # record reflects that they left mid-term.
+        if self.partner_id and hasattr(self.partner_id, 'message_post'):
             self.partner_id.message_post(
                 body=_(
                     "<b>Left officer position</b>: %(position)s "
