@@ -34,34 +34,19 @@
                         Record</em> to make a new one anyway.
                     </div>
 
-                    <separator string="Possible Matches" invisible="candidate_count == 0"/>
-                    <field name="candidate_line_ids" nolabel="1"
-                           invisible="candidate_count == 0">
-                        <!--
-                            NOTE: no `editable="bottom"` — that flag
-                            makes Odoo 19 auto-append a blank line on
-                            save, which fails validation because
-                            employee_id is required. The Pick toggle
-                            is a boolean_toggle widget, which is
-                            clickable inline in non-editable lists,
-                            so nothing is lost by removing it.
-                        -->
-                        <list create="false" delete="false">
-                            <field name="is_selected" widget="boolean_toggle"
-                                   string="Pick"/>
-                            <field name="confidence" widget="badge"
-                                   decoration-success="confidence == 'high'"
-                                   decoration-warning="confidence == 'medium'"
-                                   decoration-muted="confidence == 'low'"
-                                   readonly="1"/>
-                            <field name="employee_id" readonly="1"/>
-                            <field name="employee_email" readonly="1"/>
-                            <field name="employee_department" readonly="1"/>
-                            <field name="employee_active" widget="boolean_toggle"
-                                   readonly="1"/>
-                            <field name="match_reason" readonly="1"/>
-                        </list>
-                    </field>
+                    <!-- Possible matches are shown as a computed HTML
+                         table instead of a One2many of transient sub-
+                         records. That eliminates the whole class of
+                         "Missing required value for the field
+                         'Employee'" errors that Odoo 19's o2m save
+                         cycle produced whenever the wizard was saved
+                         (regardless of which choice the user made). -->
+                    <separator string="Possible Matches"
+                               invisible="candidate_count == 0"/>
+                    <field name="candidate_ids" invisible="1"/>
+                    <field name="candidate_summary" widget="html"
+                           readonly="1" nolabel="1"
+                           invisible="candidate_count == 0"/>
 
                     <separator string="Your Choice"/>
                     <group>

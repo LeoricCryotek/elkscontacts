@@ -31,15 +31,29 @@ class ElksVolunteerLinkWizard(models.TransientModel):
         'res.partner', string='Volunteer Contact', required=True,
     )
 
-    # Candidate matches found by the search
-    candidate_line_ids = fields.One2many(
-        'elks.volunteer.link.wizard.line', 'wizard_id',
-        string='Possible Matches',
+    # Candidate matches. Stored as a Many2many of hr.employee IDs (NOT
+    # a One2many of transient sub-records) — the earlier line-based
+    # design tripped Odoo 19's stricter o2m save cycle with the classic
+    # "Missing required value for the field 'Employee'" error on every
+    # wizard save, even when the user's actual choice was made via the
+    # Many2one dropdown or the Create-new checkbox. Using a plain m2m
+    # of real hr.employee records sidesteps that entirely.
+    candidate_ids = fields.Many2many(
+        'hr.employee', string='Possible Matches',
+        compute='_compute_candidates', store=False, readonly=True,
+    )
+    candidate_summary = fields.Html(
+        string='Match Details',
+        compute='_compute_candidates', store=False,
+        sanitize=False,
     )
 
-    # The user picks one of the candidates (or none)
+    # The user picks one of the candidates (or none). Domain limits
+    # the dropdown to matched candidates when any were found; falls
+    # back to all employees when none matched.
     selected_employee_id = fields.Many2one(
         'hr.employee', string='Link to Existing Employee',
+        domain="[('id', 'in', candidate_ids)] if candidate_ids else []",
         help='Pick the employee record that corresponds to this volunteer. '
              'Leave empty to create a new employee record instead.',
     )
@@ -57,33 +71,79 @@ class ElksVolunteerLinkWizard(models.TransientModel):
 
     # Info for the form
     candidate_count = fields.Integer(
-        'Candidates Found', compute='_compute_candidate_count',
+        'Candidates Found', compute='_compute_candidates',
     )
     contact_email = fields.Char(related='partner_id.email', readonly=True)
     contact_phone = fields.Char(related='partner_id.phone', readonly=True)
 
-    @api.depends('candidate_line_ids')
-    def _compute_candidate_count(self):
-        for wiz in self:
-            wiz.candidate_count = len(wiz.candidate_line_ids)
+    # ------------------------------------------------------------------
+    # Candidate search (computed — no persisted line records)
+    # ------------------------------------------------------------------
+    @api.depends('partner_id')
+    def _compute_candidates(self):
+        """Populate candidate_ids + candidate_summary from the search.
 
-    @api.onchange('candidate_line_ids')
-    def _onchange_candidate_selection(self):
-        """Sync is_selected toggle → selected_employee_id (no save needed)."""
-        selected = self.candidate_line_ids.filtered('is_selected')
-        if selected:
-            # Keep only the most recently toggled one
-            if len(selected) > 1:
-                for line in selected[:-1]:
-                    line.is_selected = False
-                selected = selected[-1:]
-            self.selected_employee_id = selected.employee_id
-            self.create_new = False
-        elif not self.create_new:
-            self.selected_employee_id = False
+        Runs on partner_id change (wizard open). Builds a lightweight
+        HTML table showing each match's confidence and reason for the
+        Secretary to eyeball, without needing a One2many of transient
+        sub-records.
+        """
+        for wiz in self:
+            if not wiz.partner_id:
+                wiz.candidate_ids = False
+                wiz.candidate_summary = ''
+                wiz.candidate_count = 0
+                continue
+            candidates = self._find_candidates(wiz.partner_id)
+            wiz.candidate_ids = [(6, 0, [c['employee'].id
+                                          for c in candidates])]
+            wiz.candidate_count = len(candidates)
+            wiz.candidate_summary = self._render_candidate_html(candidates)
+
+    @api.model
+    def _render_candidate_html(self, candidates):
+        """Compact HTML table of matches. Colored confidence badges."""
+        if not candidates:
+            return ''
+        color_map = {
+            'high': '#198754', 'medium': '#fd7e14', 'low': '#6c757d',
+        }
+        rows = []
+        for c in candidates:
+            emp = c['employee']
+            color = color_map.get(c['confidence'], '#6c757d')
+            rows.append(
+                f'<tr>'
+                f'<td style="padding:4px 8px;">'
+                f'<span style="background:{color};color:#fff;'
+                f'padding:2px 8px;border-radius:10px;'
+                f'font-size:11px;font-weight:bold;">'
+                f'{c["confidence"].upper()}</span></td>'
+                f'<td style="padding:4px 8px;font-weight:bold;">'
+                f'{(emp.name or "").replace("<","&lt;")}</td>'
+                f'<td style="padding:4px 8px;color:#555;">'
+                f'{(emp.work_email or "").replace("<","&lt;") or "—"}</td>'
+                f'<td style="padding:4px 8px;color:#555;">'
+                f'{(emp.department_id.name or "").replace("<","&lt;") or "—"}</td>'
+                f'<td style="padding:4px 8px;color:#888;font-style:italic;">'
+                f'{(c["reason"] or "").replace("<","&lt;")}</td>'
+                f'</tr>'
+            )
+        return (
+            '<table style="width:100%;border-collapse:collapse;'
+            'font-size:13px;">'
+            '<thead><tr style="background:#f5f5f5;">'
+            '<th style="padding:6px 8px;text-align:left;">Confidence</th>'
+            '<th style="padding:6px 8px;text-align:left;">Employee</th>'
+            '<th style="padding:6px 8px;text-align:left;">Email</th>'
+            '<th style="padding:6px 8px;text-align:left;">Department</th>'
+            '<th style="padding:6px 8px;text-align:left;">Why Matched</th>'
+            '</tr></thead>'
+            f'<tbody>{"".join(rows)}</tbody></table>'
+        )
 
     # ------------------------------------------------------------------
-    # Default get: populate candidates on wizard open
+    # Default get: preselect the top candidate if there's one obvious
     # ------------------------------------------------------------------
     @api.model
     def default_get(self, fields_list):
@@ -92,14 +152,6 @@ class ElksVolunteerLinkWizard(models.TransientModel):
         if partner_id:
             partner = self.env['res.partner'].browse(partner_id)
             candidates = self._find_candidates(partner)
-            vals['candidate_line_ids'] = [
-                (0, 0, {
-                    'employee_id': c['employee'].id,
-                    'match_reason': c['reason'],
-                    'confidence': c['confidence'],
-                })
-                for c in candidates
-            ]
             # If there's a single high-confidence match, pre-select it
             if candidates and candidates[0]['confidence'] == 'high':
                 vals['selected_employee_id'] = candidates[0]['employee'].id
