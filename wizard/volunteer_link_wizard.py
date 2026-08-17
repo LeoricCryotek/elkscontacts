@@ -326,7 +326,16 @@ class ElksVolunteerLinkWizardLine(models.TransientModel):
     wizard_id = fields.Many2one(
         'elks.volunteer.link.wizard', ondelete='cascade', required=True,
     )
-    employee_id = fields.Many2one('hr.employee', string='Employee', required=True)
+    # employee_id was previously required=True, but Odoo 19's stricter
+    # o2m save cycle would re-emit "modify" commands for lines whose
+    # employee_id wasn't in the client buffer (e.g. after the
+    # is_selected onchange toggled sibling lines off), failing
+    # validation with "Missing required value for the field 'Employee'".
+    # The line is display-only — the real link happens via the
+    # wizard's selected_employee_id — so dropping required=True is
+    # safe. default_get still sets employee_id when constructing the
+    # candidates list, and action_link_or_create validates before use.
+    employee_id = fields.Many2one('hr.employee', string='Employee')
     employee_email = fields.Char(related='employee_id.work_email', readonly=True)
     employee_department = fields.Char(related='employee_id.department_id.name', readonly=True)
     employee_active = fields.Boolean(related='employee_id.active', readonly=True)
