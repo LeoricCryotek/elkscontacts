@@ -37,7 +37,16 @@
                     <separator string="Possible Matches" invisible="candidate_count == 0"/>
                     <field name="candidate_line_ids" nolabel="1"
                            invisible="candidate_count == 0">
-                        <list create="false" delete="false" editable="bottom">
+                        <!--
+                            NOTE: no `editable="bottom"` — that flag
+                            makes Odoo 19 auto-append a blank line on
+                            save, which fails validation because
+                            employee_id is required. The Pick toggle
+                            is a boolean_toggle widget, which is
+                            clickable inline in non-editable lists,
+                            so nothing is lost by removing it.
+                        -->
+                        <list create="false" delete="false">
                             <field name="is_selected" widget="boolean_toggle"
                                    string="Pick"/>
                             <field name="confidence" widget="badge"

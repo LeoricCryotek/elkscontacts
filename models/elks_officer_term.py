@@ -175,9 +175,13 @@ class ElksOfficerTerm(models.Model):
     # The roster report and public website check x_is_vacated and
     # render the position as "Vacant" while preserving the audit
     # trail here.
+    # NB: no tracking=True on these — elks.officer.term does not
+    # inherit mail.thread yet, and Odoo 19 warns about the flag on
+    # non-mail models. Add mail.thread inheritance to the model if
+    # you want a chatter audit trail (that also requires a small
+    # schema migration).
     x_vacated_date = fields.Date(
         "Vacated On",
-        tracking=True,
         help="Date the officer stopped serving in this position. "
              "When set, the roster report and public website will show "
              "this position as Vacant. The officer's name is preserved "
@@ -189,9 +193,9 @@ class ElksOfficerTerm(models.Model):
         ('removed', 'Removed'),
         ('deceased', 'Deceased'),
         ('other', 'Other'),
-    ], string="Vacate Reason", tracking=True)
+    ], string="Vacate Reason")
     x_vacated_notes = fields.Text(
-        "Vacate Notes", tracking=True,
+        "Vacate Notes",
         help="Optional detail on why the position was vacated.",
     )
     x_is_vacated = fields.Boolean(
