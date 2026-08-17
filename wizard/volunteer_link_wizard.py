@@ -47,6 +47,15 @@ class ElksVolunteerLinkWizard(models.TransientModel):
         compute='_compute_candidates', store=False,
         sanitize=False,
     )
+    # Kept as a vestigial no-op field so any cached view or browser
+    # session referencing the old One2many name does not crash with
+    # "field is undefined". The wizard no longer uses it. Safe to
+    # remove after all users have hard-refreshed and the assets
+    # bundle has been regenerated.
+    candidate_line_ids = fields.One2many(
+        'elks.volunteer.link.wizard.line', 'wizard_id',
+        string='Possible Matches (legacy)',
+    )
 
     # The user picks one of the candidates (or none). Domain limits
     # the dropdown to matched candidates when any were found; falls
