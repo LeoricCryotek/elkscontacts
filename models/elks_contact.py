@@ -539,17 +539,46 @@ class ResPartner(models.Model):
 
     @api.constrains('x_elks_officer_position', 'active')
     def _check_unique_officer_position(self):
-        """Friendly check before SQL constraint for clearer message."""
+        """Friendly check before SQL constraint for clearer message.
+
+        Self-heals stale x_elks_officer_position values: if the "other"
+        partner still shows this position on their contact record but
+        their underlying officer term has been vacated or archived,
+        silently clear their stale field and allow the new assignment.
+        Prevents the "Only one member can be ..." block on legitimate
+        backfills after a mid-term vacancy.
+        """
+        Term = self.env.get('elks.officer.term')
         for rec in self:
             pos = rec.x_elks_officer_position
             if not pos:
                 continue
-            other = self.search([
+            others = self.search([
                 ('id', '!=', rec.id),
                 ('x_elks_officer_position', '=', pos),
-            ], limit=1)
-            if other:
-                label = dict(self._fields['x_elks_officer_position'].selection).get(pos, pos)
+            ])
+            for other in others:
+                # Self-heal: check whether `other` actually still has
+                # an active non-vacated term for this position. If not,
+                # their partner-side field is stale — clear it and
+                # move on instead of blocking.
+                still_holds = False
+                if Term is not None:
+                    active_terms = Term.search([
+                        ('partner_id', '=', other.id),
+                        ('position', '=', pos),
+                        ('active', '=', True),
+                        ('x_is_vacated', '=', False),
+                    ], limit=1)
+                    still_holds = bool(active_terms)
+                if not still_holds:
+                    other.sudo().write({
+                        'x_elks_officer_position': False,
+                    })
+                    continue
+                label = dict(
+                    self._fields['x_elks_officer_position'].selection,
+                ).get(pos, pos)
                 raise ValidationError(_(
                     "Only one member can be '%s'. Current holder: %s"
                 ) % (label, other.display_name))

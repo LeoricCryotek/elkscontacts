@@ -325,26 +325,48 @@ class ElksOfficerTerm(models.Model):
 
     # ── Constraints ──────────────────────────────────────────
     @api.constrains('position', 'lodge_year', 'partial_year', 'active',
-                    'x_vacated_date')
+                    'x_vacated_date', 'date_start', 'date_end')
     def _check_unique_position_per_year(self):
-        """Only one *active*, non-partial, non-vacated holder per
-        position per year.
+        """Only block a new term when its date range OVERLAPS an
+        existing holder's for the same position and lodge year.
 
-        Multiple holders are allowed when:
-        - one or more are archived (``active=False``), or
-        - one or more are vacated (``x_is_vacated=True``) — they held
-          the seat historically but are no longer occupying it, so the
-          replacement doesn't need to jump through the partial-year
-          hoop just to backfill,
-        - all remaining are flagged as partial-year terms.
+        Two terms for the same position + lodge year are allowed if:
+        - one or more is archived (``active=False``),
+        - one or more is vacated (``x_is_vacated=True``) — they held
+          the seat historically but are no longer occupying it,
+        - or their ``date_start``/``date_end`` windows don't overlap.
+
+        A missing ``date_start`` defaults to April 1 of the lodge year
+        and a missing ``date_end`` defaults to March 31 of the next
+        year, so a term with no dates behaves as a full-year term.
         """
+        import datetime as _dt
+
+        def _bounds(term):
+            """Return (start, end) date bounds for the term. Fills in
+            April 1 -> March 31 defaults from lodge_year when either
+            side is blank."""
+            start = term.date_start
+            end = term.date_end
+            if not (start and end) and term.lodge_year:
+                try:
+                    y_start = int(term.lodge_year.split('-')[0])
+                    start = start or _dt.date(y_start, 4, 1)
+                    end = end or _dt.date(y_start + 1, 3, 31)
+                except (ValueError, IndexError):
+                    pass
+            return start, end
+
         for rec in self:
             if not rec.position or not rec.lodge_year or not rec.active:
                 continue
             # Vacated terms are not "currently holding" — skip.
             if rec.x_is_vacated:
                 continue
-            # Only check against other active, non-vacated records.
+            rec_start, rec_end = _bounds(rec)
+
+            # Look at every other active, non-vacated term for the
+            # same position + lodge year.
             others = self.with_context(active_test=True).search([
                 ('id', '!=', rec.id),
                 ('position', '=', rec.position),
@@ -354,22 +376,33 @@ class ElksOfficerTerm(models.Model):
             ])
             if not others:
                 continue
-            if not rec.partial_year:
-                label = dict(OFFICER_POSITIONS).get(rec.position, rec.position)
+
+            for other in others:
+                other_start, other_end = _bounds(other)
+                # Non-overlapping windows: rec ends before other starts
+                # OR other ends before rec starts.
+                if (rec_end and other_start and rec_end < other_start):
+                    continue
+                if (other_end and rec_start and other_end < rec_start):
+                    continue
+                # Overlap detected — block with a clear message that
+                # names the conflicting date range.
+                label = dict(OFFICER_POSITIONS).get(
+                    rec.position, rec.position)
                 raise ValidationError(_(
-                    "The position '%s' already has an active holder for "
-                    "lodge year %s: %s. If this was a partial year served, "
-                    "check the 'Partial Year' box on both records, or "
-                    "archive the previous holder first."
-                ) % (label, rec.lodge_year, others[0].partner_id.display_name))
-            non_partial = others.filtered(lambda o: not o.partial_year)
-            if non_partial:
-                label = dict(OFFICER_POSITIONS).get(rec.position, rec.position)
-                raise ValidationError(_(
-                    "The position '%s' for lodge year %s is held by %s as "
-                    "a full term.  To add a partial-year entry, first mark "
-                    "the existing record as 'Partial Year' as well."
-                ) % (label, rec.lodge_year, non_partial[0].partner_id.display_name))
+                    "The position '%(pos)s' for lodge year %(yr)s "
+                    "overlaps an existing term held by %(other)s "
+                    "(%(o_start)s - %(o_end)s). Adjust the Term Start "
+                    "or Term End dates so the two windows don't "
+                    "overlap, mark the previous holder as vacated, or "
+                    "archive the previous term."
+                ) % {
+                    'pos': label,
+                    'yr': rec.lodge_year,
+                    'other': other.partner_id.display_name,
+                    'o_start': other_start or _('(no start)'),
+                    'o_end': other_end or _('(no end)'),
+                })
 
     @api.constrains('partner_id', 'position', 'lodge_year')
     def _check_no_duplicate_member_position(self):
