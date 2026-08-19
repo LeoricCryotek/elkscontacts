@@ -32,6 +32,10 @@ WHITE = (245, 245, 245)
 BAR_RGBA = (0, 0, 0, 170)      # translucent title bar
 PLACEHOLDER_BG = (38, 42, 54)
 PLACEHOLDER_FG = (120, 128, 145)
+# Vacant tile palette — red dashed circle + red "Position Vacant" text
+# mirrors the treatment on the public website officer page.
+VACANT_BG = (245, 240, 240)
+VACANT_FG = (176, 0, 32)
 
 # Position grouping ----------------------------------------------------
 KNIGHTS = ['leading_knight', 'loyal_knight', 'lecturing_knight']
@@ -104,6 +108,64 @@ def _initials(name):
     return (parts[0][:1] + parts[-1][:1]).upper()
 
 
+def _load_avatar_bytes(img_dir, gender):
+    """Return the bundled Elks Male/Female avatar PNG bytes if the file
+    exists on disk; None otherwise. Used as a photo fallback so
+    contacts without an uploaded portrait still get a branded tile
+    instead of an initials placeholder — same behavior as the public
+    website officer page."""
+    if not img_dir:
+        return None
+    name = 'elk_avatar_%s.png' % (
+        'female' if str(gender or '').lower() == 'female' else 'male'
+    )
+    path = os.path.join(img_dir, name)
+    try:
+        with open(path, 'rb') as fh:
+            return fh.read()
+    except Exception:
+        return None
+
+
+def _vacant_tile(target_w, target_h, position_label, fonts):
+    """Build a 'Position Vacant' tile — dashed red circle with an X
+    inside, red 'Position Vacant' text, and the position label
+    underneath. Mirrors the website vacant-officer card."""
+    target_w, target_h = int(target_w), int(target_h)
+    tile = Image.new('RGB', (target_w, target_h), VACANT_BG)
+    d = ImageDraw.Draw(tile)
+
+    # Dashed red circle (Pillow lacks native dashed strokes, so we
+    # emulate one by drawing short arc segments around the circle).
+    r = int(min(target_w, target_h) * 0.24)
+    cx, cy = target_w // 2, int(target_h * 0.36)
+    stroke = max(4, r // 14)
+    seg = 12   # degrees per dash
+    gap = 6    # degrees between dashes
+    a = 0
+    while a < 360:
+        d.arc([cx - r, cy - r, cx + r, cy + r],
+              start=a, end=a + seg,
+              fill=VACANT_FG, width=stroke)
+        a += seg + gap
+
+    # Big X in the middle of the circle
+    x_off = int(r * 0.45)
+    d.line([(cx - x_off, cy - x_off), (cx + x_off, cy + x_off)],
+           fill=VACANT_FG, width=stroke)
+    d.line([(cx - x_off, cy + x_off), (cx + x_off, cy - x_off)],
+           fill=VACANT_FG, width=stroke)
+
+    # "Position Vacant" text below the circle
+    txt = "Position Vacant"
+    f = fonts.get('vacant') or fonts['placeholder']
+    bbox = d.textbbox((0, 0), txt, font=f)
+    tw = bbox[2] - bbox[0]
+    d.text((cx - tw / 2 - bbox[0], cy + r + int(target_h * 0.04)),
+           txt, fill=VACANT_FG, font=f)
+    return tile
+
+
 def _placeholder(target_w, target_h, name, fonts):
     """Build a placeholder tile (initials in a circle) when no photo."""
     target_w, target_h = int(target_w), int(target_h)
@@ -132,20 +194,38 @@ def _fit_font(draw, text, base_font_path, font_dir, max_w, start_size, min_size=
     return _load_font(font_dir, base_font_path, min_size)
 
 
-def _draw_tile(canvas, box, officer, fonts, font_dir, emphasize=False):
+def _draw_tile(canvas, box, officer, fonts, font_dir, emphasize=False,
+               img_dir=None):
     """Render one officer photo tile with title bar into `box` on canvas.
 
-    box = (x, y, w, h).  officer = dict(name, position_label, photo, gender).
+    box = (x, y, w, h).  officer = dict(name, position_label, photo,
+    gender, is_vacated).
+
+    Photo resolution priority:
+      1. Vacated position -> "Position Vacant" placeholder tile.
+      2. Uploaded photo bytes -> centered crop.
+      3. No photo -> bundled Elks Male/Female avatar PNG (matches
+         the public website officer page).
+      4. Avatar file missing -> initials-in-circle fallback.
     """
     x, y, w, h = (int(v) for v in box)
     name = officer.get('name') or ''
     title = officer.get('position_label') or ''
-    photo = _open_photo(officer.get('photo'))
 
-    if photo is not None:
-        tile = _cover_crop(photo, w, h)
+    if officer.get('is_vacated'):
+        tile = _vacant_tile(w, h, title, fonts)
     else:
-        tile = _placeholder(w, h, name, fonts)
+        photo = _open_photo(officer.get('photo'))
+        if photo is None:
+            avatar = _open_photo(
+                _load_avatar_bytes(img_dir, officer.get('gender')),
+            )
+            if avatar is not None:
+                photo = avatar
+        if photo is not None:
+            tile = _cover_crop(photo, w, h)
+        else:
+            tile = _placeholder(w, h, name, fonts)
 
     # Gold frame
     frame = Image.new('RGB', (w, h), GOLD)
@@ -208,10 +288,13 @@ def _fixed_row_boxes(canvas_w, y, count, tile_w, tile_h, gap):
 
 def build_officer_poster(officers, emblem_bytes, lodge_name, lodge_number,
                          lodge_year, font_dir, dpi=150,
-                         width_in=47.0, height_in=29.0):
+                         width_in=47.0, height_in=29.0, img_dir=None):
     """Build the poster and return single-page PDF bytes.
 
-    officers: list of dict(position_key, position_label, name, photo, gender)
+    officers: list of dict(position_key, position_label, name, photo,
+    gender, is_vacated).
+    img_dir: absolute path to elkscontacts/static/img/ — used to load
+    the bundled Elks Male/Female avatar PNGs as a photo fallback.
     """
     W = int(round(width_in * dpi))
     H = int(round(height_in * dpi))
@@ -223,6 +306,9 @@ def build_officer_poster(officers, emblem_bytes, lodge_name, lodge_number,
 
     fonts = {
         'placeholder': _load_font(font_dir, 'DejaVuSans-Bold.ttf', int(H * 0.06)),
+        # Smaller bold font for the "Position Vacant" caption on
+        # vacated tiles — sized to fit inside the tile's dashed circle.
+        'vacant': _load_font(font_dir, 'DejaVuSans-Bold.ttf', int(H * 0.03)),
     }
 
     # ---- index officers by position ----
@@ -370,7 +456,8 @@ def build_officer_poster(officers, emblem_bytes, lodge_name, lodge_number,
             for (officer, _scale), (tw, th) in zip(row, sizes):
                 # vertically center each tile within the row band
                 y = cur_y + (band_h - th) / 2.0
-                _draw_tile(canvas, (x, y, tw, th), officer, fonts, font_dir)
+                _draw_tile(canvas, (x, y, tw, th), officer, fonts,
+                           font_dir, img_dir=img_dir)
                 x += tw + row_gap
             cur_y += band_h + vgap
 

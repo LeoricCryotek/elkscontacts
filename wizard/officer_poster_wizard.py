@@ -19,6 +19,9 @@ from ..models.elks_officer_term import (
 )
 from . import officer_poster_builder as builder
 
+_IMG_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..', 'static', 'img')
+)
 _FONT_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..', 'static', 'fonts')
 )
@@ -84,15 +87,30 @@ class ElksOfficerPosterWizard(models.TransientModel):
                 continue
             seen.add(term.position)
 
-            photo = term.image_1920 or term.partner_id.image_1920 or False
-            photo_bytes = base64.b64decode(photo) if photo else None
+            # Vacated terms are rendered as "Position Vacant" tiles —
+            # we skip loading the officer's photo since the tile will
+            # show a placeholder icon + "Position Vacant" text (same
+            # treatment as the public website officer page).
+            is_vacated = bool(getattr(term, 'x_is_vacated', False))
+            photo_bytes = None
+            if not is_vacated:
+                photo = (term.image_1920
+                         or term.partner_id.image_1920
+                         or False)
+                photo_bytes = base64.b64decode(photo) if photo else None
 
             officers.append({
                 'position_key': term.position,
                 'position_label': labels.get(term.position, term.position or ''),
-                'name': term.partner_id.name or '',
+                # Vacated tiles hide the officer's name — only the
+                # position label appears — so the printed poster
+                # reads "Position Vacant / <Position>" instead of
+                # advertising who resigned.
+                'name': ('' if is_vacated
+                         else (term.partner_id.name or '')),
                 'photo': photo_bytes,
                 'gender': term.gender or 'male',
+                'is_vacated': is_vacated,
                 '_order': order_index.get(term.position, 999),
             })
 
@@ -168,6 +186,7 @@ class ElksOfficerPosterWizard(models.TransientModel):
             lodge_number=lodge_number,
             lodge_year=self.lodge_year,
             font_dir=_FONT_DIR,
+            img_dir=_IMG_DIR,
             dpi=self.dpi,
             width_in=self.width_in,
             height_in=self.height_in,
