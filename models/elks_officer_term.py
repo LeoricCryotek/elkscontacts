@@ -324,23 +324,33 @@ class ElksOfficerTerm(models.Model):
             rec.display_name = f"{pos} - {name} ({rec.lodge_year})"
 
     # ── Constraints ──────────────────────────────────────────
-    @api.constrains('position', 'lodge_year', 'partial_year', 'active')
+    @api.constrains('position', 'lodge_year', 'partial_year', 'active',
+                    'x_vacated_date')
     def _check_unique_position_per_year(self):
-        """Only one *active*, non-partial holder per position per year.
+        """Only one *active*, non-partial, non-vacated holder per
+        position per year.
 
         Multiple holders are allowed when:
         - one or more are archived (``active=False``), or
-        - all are flagged as partial-year terms.
+        - one or more are vacated (``x_is_vacated=True``) — they held
+          the seat historically but are no longer occupying it, so the
+          replacement doesn't need to jump through the partial-year
+          hoop just to backfill,
+        - all remaining are flagged as partial-year terms.
         """
         for rec in self:
             if not rec.position or not rec.lodge_year or not rec.active:
                 continue
-            # Only check against other active records
+            # Vacated terms are not "currently holding" — skip.
+            if rec.x_is_vacated:
+                continue
+            # Only check against other active, non-vacated records.
             others = self.with_context(active_test=True).search([
                 ('id', '!=', rec.id),
                 ('position', '=', rec.position),
                 ('lodge_year', '=', rec.lodge_year),
                 ('active', '=', True),
+                ('x_is_vacated', '=', False),
             ])
             if not others:
                 continue
