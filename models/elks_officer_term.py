@@ -402,9 +402,10 @@ class ElksOfficerTerm(models.Model):
     # ── Sync current officer position to contact ────────────
     def _sync_officer_position_to_partner(self):
         """Update x_elks_officer_position on the partner based on the
-        most recent *active* officer term for the current lodge year.
-        If the partner has no active term for the current year, clear
-        the position."""
+        most recent *active, non-vacated* officer term for the current
+        lodge year. Vacated terms are treated as "no longer holding"
+        the position so the res.partner-side uniqueness constraint
+        doesn't block backfilling the vacant seat."""
         current_year = _default_lodge_year(self)
         partners = self.mapped('partner_id')
         for partner in partners:
@@ -412,6 +413,7 @@ class ElksOfficerTerm(models.Model):
                 ('partner_id', '=', partner.id),
                 ('lodge_year', '=', current_year),
                 ('active', '=', True),
+                ('x_is_vacated', '=', False),
             ], order='id desc', limit=1)
             new_pos = term.position if term else False
             if partner.x_elks_officer_position != new_pos:
@@ -425,7 +427,11 @@ class ElksOfficerTerm(models.Model):
 
     def write(self, vals):
         res = super().write(vals)
-        if 'position' in vals or 'partner_id' in vals or 'lodge_year' in vals:
+        # x_vacated_date drives x_is_vacated, so a vacate write needs
+        # to re-sync the partner's officer position (clearing it, if
+        # this was their only current term).
+        if ('position' in vals or 'partner_id' in vals
+                or 'lodge_year' in vals or 'x_vacated_date' in vals):
             self._sync_officer_position_to_partner()
         return res
 
