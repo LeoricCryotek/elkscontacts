@@ -32,10 +32,11 @@ WHITE = (245, 245, 245)
 BAR_RGBA = (0, 0, 0, 170)      # translucent title bar
 PLACEHOLDER_BG = (38, 42, 54)
 PLACEHOLDER_FG = (120, 128, 145)
-# Vacant tile palette — red dashed circle + red "Position Vacant" text
-# mirrors the treatment on the public website officer page.
-VACANT_BG = (245, 240, 240)
-VACANT_FG = (176, 0, 32)
+# Vacant tile palette. Dark background to match the black poster
+# canvas so the tile blends in; red dashed circle + red "Vacant"
+# caption for the visual cue.
+VACANT_BG = (28, 28, 32)
+VACANT_FG = (220, 60, 80)
 
 # Position grouping ----------------------------------------------------
 KNIGHTS = ['leading_knight', 'loyal_knight', 'lecturing_knight']
@@ -127,19 +128,28 @@ def _load_avatar_bytes(img_dir, gender):
         return None
 
 
-def _vacant_tile(target_w, target_h, position_label, fonts):
+def _vacant_tile(target_w, target_h, position_label, fonts,
+                 font_dir=None):
     """Build a 'Position Vacant' tile — dashed red circle with an X
-    inside, red 'Position Vacant' text, and the position label
-    underneath. Mirrors the website vacant-officer card."""
+    inside plus a red 'VACANT' caption. All sizes are relative to the
+    TILE dimensions (not the whole poster) so the graphic scales
+    correctly whether the tile is a 6" ER hero or a 3" appointed
+    officer tile. Mirrors the website vacant-officer card."""
     target_w, target_h = int(target_w), int(target_h)
     tile = Image.new('RGB', (target_w, target_h), VACANT_BG)
     d = ImageDraw.Draw(tile)
 
-    # Dashed red circle (Pillow lacks native dashed strokes, so we
-    # emulate one by drawing short arc segments around the circle).
-    r = int(min(target_w, target_h) * 0.24)
-    cx, cy = target_w // 2, int(target_h * 0.36)
-    stroke = max(4, r // 14)
+    # Circle radius scaled to tile WIDTH (portrait tiles are narrower
+    # than they are tall — sizing to min(w, h) would clip the sides
+    # or leave the circle floating). Then position it in the upper
+    # half of the tile so the caption + gold title bar fit below.
+    r = int(target_w * 0.28)
+    cx = target_w // 2
+    cy = int(target_h * 0.38)
+    stroke = max(3, r // 12)
+
+    # Dashed red circle: Pillow has no dashed-stroke primitive, so
+    # emulate it by drawing short arc segments around the perimeter.
     seg = 12   # degrees per dash
     gap = 6    # degrees between dashes
     a = 0
@@ -149,19 +159,29 @@ def _vacant_tile(target_w, target_h, position_label, fonts):
               fill=VACANT_FG, width=stroke)
         a += seg + gap
 
-    # Big X in the middle of the circle
+    # X in the middle of the circle
     x_off = int(r * 0.45)
     d.line([(cx - x_off, cy - x_off), (cx + x_off, cy + x_off)],
            fill=VACANT_FG, width=stroke)
     d.line([(cx - x_off, cy + x_off), (cx + x_off, cy - x_off)],
            fill=VACANT_FG, width=stroke)
 
-    # "Position Vacant" text below the circle
-    txt = "Position Vacant"
-    f = fonts.get('vacant') or fonts['placeholder']
+    # 'VACANT' caption sized to fit within the tile width, sits just
+    # below the circle. _fit_font shrinks the font if the string is
+    # too wide (it never is at this size, but future-proofing) so it
+    # can't overflow the tile edges.
+    txt = "VACANT"
+    caption_max_w = int(target_w * 0.85)
+    start_size = max(18, int(target_h * 0.09))
+    if font_dir is not None:
+        f = _fit_font(d, txt, 'DejaVuSans-Bold.ttf', font_dir,
+                      caption_max_w, start_size, min_size=14)
+    else:
+        f = fonts.get('vacant') or fonts['placeholder']
     bbox = d.textbbox((0, 0), txt, font=f)
     tw = bbox[2] - bbox[0]
-    d.text((cx - tw / 2 - bbox[0], cy + r + int(target_h * 0.04)),
+    caption_y = cy + r + int(target_h * 0.03)
+    d.text((cx - tw / 2 - bbox[0], caption_y),
            txt, fill=VACANT_FG, font=f)
     return tile
 
@@ -213,7 +233,7 @@ def _draw_tile(canvas, box, officer, fonts, font_dir, emphasize=False,
     title = officer.get('position_label') or ''
 
     if officer.get('is_vacated'):
-        tile = _vacant_tile(w, h, title, fonts)
+        tile = _vacant_tile(w, h, title, fonts, font_dir=font_dir)
     else:
         photo = _open_photo(officer.get('photo'))
         if photo is None:
